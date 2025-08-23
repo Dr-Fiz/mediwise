@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* optional niceties */
+:root{
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+mark {
+  background: #FEF08A; /* Tailwind's yellow-200 */
+  border-radius: 3px;
+  padding: 0 2px;
+}
