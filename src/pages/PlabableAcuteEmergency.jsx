@@ -2259,7 +2259,291 @@ explanation_detail: [
 "<strong>Exam takeaway:</strong> Suspected cervical spine injury = <strong>immobilise first</strong> (manual in-line, collar, blocks and tape). Imaging and referrals follow once the neck is secured and ABC is underway."
 ]
 },
-
+{
+id: "EM-1017",
+topic: "Emergency Medicine",
+difficulty: "Medium",
+vignetteTitle: "Clinical Vignette",
+stem: "A 26 year old man presents to the Emergency Department with the complaint of a 24 hour history of epigastric pain and haematemesis. He had ingested an unknown drug four days ago, but he cannot remember the name of the drug or the amount of the drug that he took at the time because he had been drunk. He has no past medical history of note and takes no chronic medication. He indulges in social drinking occasionally. Blood tests were done, and the results are as follows:<br/><br/>Creatinine <strong>230 µmol/L (70-150 µmol/L)</strong><br/>Bilirubin <strong>20 µmol/L (3-17 µmol/L)</strong><br/>Alanine transaminase (ALT) <strong>1880 U/L (5-35 U/L)</strong><br/>Aspartate transaminase (AST) <strong>3510 U/L (5-35 U/L)</strong><br/>Alkaline phosphatase (ALP) <strong>215 U/L (30-150 U/L)</strong><br/>Gamma glutamyl transferase (GGT) <strong>80 U/L (8-60 U/L)</strong><br/>Prothrombin time (PT) <strong>20 seconds (10-14 seconds)</strong><br/><br/>He has a pulse rate of 128 beats/minute, blood pressure of 100/60 mmHg, respiratory rate of 25 breaths/minute and a temperature of 37.1°C. What SINGLE most likely drug did this patient ingest?",
+options: [
+{ key: "A", text: "Amitriptyline" },
+{ key: "B", text: "Aspirin" },
+{ key: "C", text: "Paracetamol" },
+{ key: "D", text: "Venlafaxine" },
+{ key: "E", text: "Organophosphates" }
+],
+correct: "C",
+explanation_plabable: [
+"The raised level of serum creatinine, bilirubin, liver enzymes as well as the increased prothrombin time indicates that this patient has taken an overdose of paracetamol. Paracetamol is an antipyretic and analgesic. Patients are usually asymptomatic for the first 24 hours but later nonspecific abdominal symptoms. Hepatic necrosis begins to develop after 24 hours and can progress to acute liver failure. The liver damage is usually not detectable by routine liver function test until at least 18 hours after ingestion of paracetamol. Alanine transferase (ALT), prothrombin time usually peak 72 to 96 hours after ingestion. In the United Kingdom, paracetamol can be purchased over the counter; however, it is government legislation that it is not to be sold in excess of 16 tablets at a time. For an average person, 24 tablets usually constitute an overdose.",
+"The other answers are less likely.",
+"Amitriptyline is a tricyclic antidepressant. TCA’s taken in large amounts can cause excessive sedation, sympathomimetic effects (tachycardia, sweating, dilated pupils).",
+"Aspirin is a potent antiplatelet agent as well as an antipyretic, analgesic and anti-inflammatory agent. An overdose of aspirin causes ringing in the ears, nausea, abdominal pain, and tachypnoea.",
+"Venlafaxine is a type of antidepressant of the selective serotonin-norepinephrine reuptake inhibitors (SNRI) class often used to treat depression, anxiety and panic attacks. Most patients overdosing with venlafaxine develop only mild symptoms of feeling tired, palpitations and vomiting. They rarely cause death.",
+"Organophosphates are usually the active ingredient in insecticides. Symptoms include increased saliva and tear production, diarrhoea, vomiting, small pupils, sweating, muscle tremors, and confusion."
+],
+explanation_detail: [
+"<strong>Why the answer is correct:</strong> The laboratory results show severe hepatocellular injury: markedly elevated ALT (1880 U/L) and AST (3510 U/L), prolonged prothrombin time (20s), and rising creatinine suggesting multi-organ involvement (hepatorenal syndrome). This pattern is characteristic of <strong>paracetamol toxicity</strong>. Paracetamol overdose depletes hepatic glutathione, allowing toxic NAPQI accumulation, causing centrilobular necrosis. Clinical course is typically: asymptomatic for 24h, followed by abdominal pain and deranged LFTs, then acute liver failure within 72–96h.",
+"<strong>Pathophysiology:</strong> Paracetamol is metabolised in the liver. In overdose, glucuronidation/sulfation pathways saturate, forcing metabolism via cytochrome P450 to toxic NAPQI. Normally detoxified by glutathione, but depletion results in hepatocellular necrosis. Renal injury and metabolic acidosis may also ensue.",
+"<strong>Differential diagnoses:</strong> <ul><li>Amitriptyline overdose — presents with anticholinergic features (dilated pupils, tachycardia, seizures, arrhythmias), not isolated hepatotoxicity.</li><li>Aspirin toxicity — causes tinnitus, metabolic acidosis/respiratory alkalosis, GI upset, hyperthermia, not massive transaminitis.</li><li>Venlafaxine — can cause CNS/serotonergic symptoms, arrhythmias, seizures, but not hepatotoxicity.</li><li>Organophosphates — cause cholinergic crisis (salivation, diarrhoea, miosis, bronchorrhoea), not isolated liver injury.</li></ul>",
+"<strong>Why the other options are wrong:</strong> <ul><li>Amitriptyline: no arrhythmia or CNS depression described.</li><li>Aspirin: no tinnitus, acid-base disturbance, or hyperventilation explained by aspirin poisoning.</li><li>Venlafaxine: would not explain severe LFT derangement.</li><li>Organophosphates: classic cholinergic toxidrome absent here.</li></ul>",
+"<strong>Management/algorithm:</strong> <ul><li>Immediate: check timing/amount of ingestion, obtain plasma paracetamol level (nomogram if within 24h).</li><li>Start <strong>N-acetylcysteine (NAC)</strong> immediately if >8h since ingestion or if level above treatment line. NAC replenishes glutathione, preventing further hepatic injury.</li><li>Supportive care: IV fluids, correct hypoglycaemia, monitor INR, renal function, acid-base status.</li><li>Refer early to liver unit if INR > 6.5, creatinine elevated, encephalopathy develops, or acidosis persists.</li></ul>",
+"<strong>Guideline cues:</strong> According to Resuscitation Council UK and TOXBASE guidance, NAC is indicated if plasma level is above treatment threshold or if ingestion time uncertain and patient symptomatic with deranged LFTs.",
+"<strong>Common pitfalls:</strong> <ul><li>Relying on normal early LFTs — hepatotoxicity often delayed until 18–24h.</li><li>Delaying NAC while waiting for levels — give empirically if >8h post-ingestion.</li><li>Assuming OTC paracetamol is benign — 24 tablets can be lethal.</li></ul>",
+"<strong>Exam takeaway:</strong> <em>Severe transaminitis + prolonged PT after overdose strongly indicates paracetamol toxicity; NAC is life-saving if given promptly.</em>"
+]
+},
+{
+id: "EM-0500",
+topic: "Emergency Medicine",
+difficulty: "Medium",
+vignetteTitle: "Clinical Vignette",
+stem: "A 48 year old man has been having diarrhoea, vomiting and mild abdominal pain for the past 4 days. He was brought to the Emergency Department by his wife as he was disoriented in the morning. His blood pressure is 110/75 mmHg and his heart rate is 89 beats/minute. His temperature is 37.9°C. His blood test show the following:<br/><br/>Haemoglobin <strong>144 g/l (130-180)</strong><br/>White cell count <strong>18 x 10^9/L (4-11)</strong><br/>Platelets <strong>325 x 10^9/L (150-400)</strong><br/>Serum urea <strong>11.5 mmol/L (2.0-7.0)</strong><br/>Serum creatinine <strong>185 µmol/L (70-150)</strong><br/>Serum calcium <strong>2.51 mmol/l (2.1-2.6)</strong><br/>eGFR <strong>60 ml/min</strong><br/>Sodium <strong>124 mmol/L (135-145)</strong><br/>Potassium <strong>3.6 mmol/L (3.5-5.0)</strong><br/>Glucose (fasting) <strong>3.6 mmol/L (3.5-5.5)</strong><br/><br/>What is the SINGLE most appropriate solution to be administered intravenously?",
+options: [
+{ key: "A", text: "0.45% sodium chloride" },
+{ key: "B", text: "0.9% sodium chloride" },
+{ key: "C", text: "3% sodium chloride" },
+{ key: "D", text: "0.45% sodium chloride and 0.15% potassium chloride" },
+{ key: "E", text: "Mannitol" }
+],
+correct: "B",
+explanation_plabable: [
+"This man likely has an episode of gastroenteritis. His sodium levels have decreased likely because he over replaced fluid by drinking water.",
+"Patients who present with hyponatraemia due to acute vomiting and diarrhoea can be given intravenous normal saline (0.9% sodium chloride). Care should be taken to correct serum sodium levels slowly to avoid cerebral oedema. In general, the more acute the change of hyponatraemia, the quicker one can correct it. If there is chronic hyponatraemia or if the time of developing this hyponatraemia is unclear, then it is best to correct it slowly.",
+"Hypertonic saline is rarely used. There are situations where one would use hypertonic saline to raise the sodium rapidly such as patients who are seizing or in a coma. This is usually senior led and would not be expected at your level."
+],
+explanation_detail: [
+"<strong>Why the answer is correct:</strong> The presentation (4 days of vomiting/diarrhoea, mild fever, tachypnoea absent, normal glucose) with <strong>Na 124 mmol/L</strong>, elevated urea/creatinine and clinical disorientation is most consistent with <em>hypovolaemic hyponatraemia</em> from GI losses and excess free-water intake. The definitive initial treatment is <strong>0.9% sodium chloride</strong> to restore intravascular volume, suppress non-osmotic ADH and safely raise serum sodium.",
+"<strong>Core pathophysiology/mechanism:</strong> GI fluid loss depletes sodium and water → reduced effective circulating volume → baroreceptor-driven ADH secretion → renal free-water retention and dilutional hyponatraemia. Isotonic saline corrects ECV; as volume restores, ADH falls and kidneys excrete excess free water, normalising sodium gradually.",
+"<strong>Differential diagnoses:</strong> <ul><li><strong>SIADH (euvolaemic)</strong>: would have low urea/creatinine and no overt volume loss; often due to drugs/CNS/pulmonary disease.</li><li><strong>Hyperglycaemia-induced dilution</strong>: glucose is normal (3.6 mmol/L), so not the cause.</li><li><strong>Oedematous states</strong> (HF/cirrhosis/nephrotic): peripheral oedema/ascites history absent.</li><li><strong>Primary polydipsia</strong>: usually psychiatric/excess water without marked urea rise.</li><li><strong>Adrenal insufficiency</strong>: often hyperkalaemia/hypotension/tan; potassium is normal.</li></ul>",
+"<strong>Why the other options are wrong:</strong> <ul><li><strong>A. 0.45% sodium chloride</strong> is hypotonic and can worsen hyponatraemia and cerebral oedema.</li><li><strong>C. 3% sodium chloride</strong> is reserved for <em>severe symptomatic</em> hyponatraemia (e.g., seizures, coma) aiming for an initial 4–6 mmol/L rise; not indicated here.</li><li><strong>D. 0.45% NaCl + 0.15% KCl</strong> remains hypotonic; adding K⁺ risks rapid shifts and arrhythmia without indication.</li><li><strong>E. Mannitol</strong> is an osmotic diuretic used for raised ICP; it would aggravate volume depletion and sodium derangement.</li></ul>",
+"<strong>Management/algorithm:</strong> <ul><li>Place on monitors; assess volume status. If shocked, give <strong>0.9% saline 500 mL</strong> bolus over 10–15 min; repeat as needed while reassessing.</li><li>If not shocked but hypovolaemic, start <strong>0.9% saline 1 L</strong> over 1–2 h, then continue as guided by vitals, urine output and sodium trend.</li><li>Aim sodium correction <strong>≤10 mmol/L in 24 h</strong> (prefer 6–8) and <strong>≤18 mmol/L in 48 h</strong> to avoid osmotic demyelination.</li><li>Check serum/urine osmolality and urine sodium if aetiology uncertain; monitor U&E and sodium <strong>every 4–6 h</strong> initially.</li><li>Treat cause: antiemetics, oral rehydration when able; avoid hypotonic fluids.</li><li>If severe neurologic symptoms develop, give <strong>3% hypertonic saline 150 mL</strong> over 15–20 min, repeat up to 2–3 times under senior supervision to achieve a 4–6 mmol/L rise, then resume isotonic therapy.</li></ul>",
+"<strong>Step-by-step realistic ED scenario:</strong> <ul><li><strong>0–1 min:</strong> A–E assessment, oxygen if SpO₂ < 94%, cardiac monitoring, IV access ×2, bedside glucose.</li><li><strong>1–3 min:</strong> If hypotensive or shocked, give <strong>0.9% NaCl 500 mL</strong> stat; send bloods (FBC, U&E, osmolality, LFTs, CRP), venous gas (lactate), urine dip.</li><li><strong>3–10 min:</strong> Start maintenance/deficit replacement with <strong>0.9% NaCl</strong>; strict input–output and urine output target >0.5 mL/kg/h.</li><li><strong>10–30 min:</strong> Recheck vitals; review labs. If sodium rising >1–2 mmol/L/h, slow infusion. Address nausea with ondansetron 4 mg IV.</li><li><strong>30–60 min:</strong> Repeat sodium at 4–6 h. Consider admission for ongoing IV fluids and monitoring; escalate to senior if confusion worsens or seizures occur (then use 3% saline bolus as above).</li><li><strong>Disposition:</strong> Admit under acute medicine; discharge only when euvolaemic, sodium stable, symptoms resolved and clear oral plan given.</li></ul>",
+"<strong>Guideline cues:</strong> UK/European guidance (RCEM/ESE) recommends <strong>isotonic saline</strong> for hypovolaemic hyponatraemia, cautious correction limits (≤10 mmol/L in 24 h), and hypertonic saline only for severe neurologic symptoms under senior oversight.",
+"<strong>Common pitfalls:</strong> <ul><li>Using hypotonic fluids (0.45% NaCl) in hypovolaemic hyponatraemia.</li><li>Correcting sodium too quickly — risk of <em>osmotic demyelination</em>.</li><li>Forgetting to treat the underlying GI fluid loss and to monitor sodium frequently.</li></ul>",
+"<strong>Exam takeaway:</strong> Vomiting/diarrhoea + low Na⁺ = <em>hypovolaemic hyponatraemia</em> → resuscitate with <strong>0.9% sodium chloride</strong>; correct slowly and monitor closely."
+]
+},
+{
+id: "EM-0505",
+topic: "Emergency Medicine",
+difficulty: "Medium",
+vignetteTitle: "Clinical Vignette",
+stem: "A 32 year old man is brought to A&E by his wife with symptoms of chest pain, abdominal pain, palpitations, tinnitus, nausea and altered mental status. His wife says that she found a bottle of empty medication on the toilet floor and it is likely that he consumed the whole bottle. He has a respiratory rate of 34 breaths/minute. His arterial blood gas shows the following:<br/><br/>pH <strong>7.31 (7.35–7.45)</strong><br/>PaO₂ <strong>13 kPa (10–14 kPa)</strong><br/>PaCO₂ <strong>3.0 kPa (4.7–6.0)</strong><br/>Bicarbonate <strong>18 mmol/L (22–26)</strong><br/><br/>His blood results show the following:<br/><br/>Haemoglobin <strong>133 g/L (130–180)</strong><br/>White cell count <strong>8 × 10⁹/L (4–11)</strong><br/>Platelets <strong>350 × 10⁹/L (150–400)</strong><br/>Sodium <strong>137 mmol/L (135–145)</strong><br/>Potassium <strong>4.1 mmol/L (3.5–5.0)</strong><br/>Creatinine <strong>80 µmol/L (70–150)</strong><br/>eGFR <strong>>90 mL/min</strong><br/><br/>His ECG shows sinus rhythm with a rate of 95 beats/minute. What is the SINGLE most likely medication that he could have taken?",
+options: [
+{ key: "A", text: "Paracetamol" },
+{ key: "B", text: "Aspirin" },
+{ key: "C", text: "Propranolol" },
+{ key: "D", text: "Enalapril" },
+{ key: "E", text: "Diazepam" }
+],
+correct: "B",
+explanation_plabable: [
+"Remember:<br/>• If bicarbonates are low → Think metabolic acidosis (or renal compensation for a respiratory alkalosis).<br/>• If PaCO₂ is low → Think respiratory alkalosis (or respiratory compensation for a metabolic acidosis).",
+"This is likely from aspirin poisoning. With aspirin overdose, they initially hyperventilate leading to respiratory alkalosis. The initial phase could last up to 12 hours. Following that, progressive metabolic acidosis occurs. This usually occurs around the 24 hour mark after ingestion for adults.",
+"A mixed respiratory alkalosis and metabolic acidosis is a common acid–base finding in patients with aspirin overdose.",
+"One of the main features of aspirin overdose which you do not see commonly with the other medications is tinnitus (seen in the stem). This feature should prompt you to pick aspirin over the other options.",
+"Paracetamol overdose may also cause metabolic acidosis but toxicity does not cause tinnitus. Furthermore, aspirin overdose is a more recognised cause of metabolic acidosis compared to paracetamol.",
+"Propranolol overdose does not cause tinnitus. Tachycardia (seen in the stem) is also not typical of a β-blocker overdose. One would expect either bradycardia or a heart block.",
+"Overdose of ACE inhibitors like enalapril can cause metabolic acidosis but one of the main features of ACE inhibitor overdose is hyperkalaemia which is not seen in this stem. Tinnitus is also not a recognised feature of ACE inhibitor overdose.",
+"Overdose of benzodiazepines would cause respiratory depression and respiratory acidosis.",
+"If suspecting metabolic acidosis do a blood gas. A metabolic acidosis picture with an increased anion gap can be due to several drugs. Common ones are listed here: Metformin, Alcohol, Isoniazid."
+],
+explanation_detail: [
+"<strong>Why the answer is correct:</strong> The patient’s symptoms of tinnitus, abdominal pain, hyperventilation, altered mental status, plus ABG showing <strong>low PaCO₂ (respiratory alkalosis)</strong> and <strong>low bicarbonate (metabolic acidosis)</strong> indicates a mixed respiratory alkalosis + metabolic acidosis — classic for <strong>salicylate (aspirin) overdose</strong>. The GI upset and confusion support this diagnosis.",
+"<strong>Core pathophysiology/mechanism:</strong> Salicylates stimulate the medullary respiratory centre → hyperventilation → respiratory alkalosis. They also uncouple oxidative phosphorylation → lactic acidosis and ketoacidosis → metabolic acidosis. This dual process explains the mixed ABG picture.",
+"<strong>Differential diagnoses:</strong> <ul><li><em>Paracetamol overdose</em>: hepatotoxicity with deranged LFTs, not tinnitus or hyperventilation.</li><li><em>Propranolol overdose</em>: bradycardia, hypotension, hypoglycaemia, not tachypnoea or tinnitus.</li><li><em>Enalapril overdose</em>: hyperkalaemia, hypotension, renal impairment, not tinnitus or mixed ABG.</li><li><em>Diazepam overdose</em>: CNS depression, hypoventilation (respiratory acidosis), not alkalosis.</li></ul>",
+"<strong>Why the other options are wrong:</strong> <ul><li>Paracetamol: metabolic acidosis late, but no tinnitus or respiratory alkalosis.</li><li>Propranolol: expect bradycardia, not tachycardia.</li><li>Enalapril: would show hyperkalaemia, absent here.</li><li>Diazepam: depresses respiration, not stimulates hyperventilation.</li></ul>",
+"<strong>Management/algorithm:</strong> <ul><li>Immediate: A–E assessment, cardiac monitoring, IV access, oxygen, check paracetamol/salicylate levels urgently.</li><li><strong>Activated charcoal</strong> if ingestion within 1 hour (50 g orally/NG).</li><li><strong>IV sodium bicarbonate</strong> infusion (e.g., 1.26% or 8.4% boluses followed by infusion) to alkalinise urine and plasma, enhancing salicylate excretion.</li><li>Monitor pH, potassium, glucose, salicylate levels 2–4 hourly.</li><li>Correct hypoglycaemia aggressively with IV dextrose.</li><li><strong>Haemodialysis</strong> if severe poisoning: salicylate level > 700 mg/L, renal failure, pulmonary oedema, severe acidosis, or altered mental status refractory to therapy.</li></ul>",
+"<strong>Step-by-step realistic ED scenario:</strong> <ul><li><strong>0–1 min:</strong> Primary survey (A–E), high-flow oxygen, continuous monitoring, IV access ×2, bedside glucose.</li><li><strong>1–3 min:</strong> Take bloods (U&E, LFTs, coag, glucose, ABG, salicylate & paracetamol levels), insert NG tube if safe.</li><li><strong>3–10 min:</strong> Administer activated charcoal if within 1 h of ingestion. Give IV fluids; start sodium bicarbonate bolus if symptomatic/metabolic acidosis present.</li><li><strong>10–30 min:</strong> Recheck ABG; titrate sodium bicarbonate infusion to maintain urine pH 7.5–8.0. Correct potassium to keep >3.5 mmol/L (as hypokalaemia reduces bicarbonate efficacy).</li><li><strong>30–60 min:</strong> Monitor neurological status, repeat salicylate levels, prepare for possible dialysis if deterioration or high levels.</li><li><strong>Disposition:</strong> Admit to HDU/ICU; liaise with toxicology/renal for dialysis if indicated. Do not discharge until asymptomatic, salicylate levels falling and safe follow-up ensured.</li></ul>",
+"<strong>Guideline cues:</strong> TOXBASE/RCEM guidance emphasises early bicarbonate therapy, potassium correction, and low threshold for dialysis in severe salicylate poisoning.",
+"<strong>Common pitfalls:</strong> <ul><li>Missing the classic mixed alkalosis + acidosis picture.</li><li>Forgetting to check paracetamol level (patients often co-ingest).</li><li>Correcting sodium but neglecting potassium during bicarbonate therapy.</li></ul>",
+"<strong>Exam takeaway:</strong> <em>Aspirin overdose = tinnitus + mixed respiratory alkalosis and metabolic acidosis. First-line is IV sodium bicarbonate; escalate to dialysis if severe.</em>"
+]
+},
+{
+id: "EM-1561",
+topic: "Emergency Medicine",
+difficulty: "Medium",
+vignetteTitle: "Clinical Vignette",
+stem: "A 12 year old boy fell from a bicycle and hit his head on the pavement. He has difficulty remembering the events that unfolded right before he injured his head. The accident was witnessed by his mother. He did not lose consciousness. He has had three discrete episodes of vomiting since the injury. There is a small swelling on his forehead with no visible lacerations or bleeding. He has a Glasgow Coma Scale of 15/15. His neurological examination was unremarkable. What is the SINGLE most appropriate management?",
+options: [
+{ key: "A", text: "CT scan of the head within 1 hour" },
+{ key: "B", text: "CT scan of the head within 8 hours" },
+{ key: "C", text: "Observe for a minimum of 4 hours post head injury" },
+{ key: "D", text: "Observe for a minimum of 24 hours post head injury" },
+{ key: "E", text: "Prescribe pain relief and discharge" }
+],
+correct: "A",
+explanation_plabable: [
+"The main point to look at in this stem is vomiting and amnesia. Any head injuries in children presenting to A&E with more than ONE risk factor from the injury would require a CT scan within 1 hour.",
+"Amnesia more than 5 minutes is one risk factor. 3 or more discrete episodes of vomiting is the other risk factor.",
+],
+explanation_detail: [
+"<strong>Why the answer is correct:</strong> According to NICE CG176, children with head injury require urgent CT (<strong>within 1 hour</strong>) if they present with ≥2 risk factors. This boy has both <strong>amnesia >5 minutes</strong> and <strong>≥3 episodes of vomiting</strong>. Although his GCS is 15 and neuro exam is normal, the combination of risk factors indicates high likelihood of clinically important intracranial injury, necessitating immediate CT brain.",
+"<strong>Core pathophysiology/mechanism:</strong> Traumatic brain injury may lead to intracranial haemorrhage (extradural, subdural, intracerebral) or cerebral oedema. Amnesia reflects cortical/hippocampal dysfunction from concussion or contusion. Repeated vomiting suggests raised ICP or ongoing brain irritation from bleeding. Early CT allows identification before deterioration.",
+"<strong>Differential diagnoses:</strong> <ul><li>Simple concussion: transient amnesia/confusion but usually ≤1 risk factor, not multiple.</li><li>Isolated scalp haematoma: causes swelling but no vomiting or amnesia.</li><li>Viral gastroenteritis: vomiting present, but no head injury/amnesia link.</li><li>Post-traumatic seizure: not described here; GCS remains 15.</li></ul>",
+"<strong>Why the other options are wrong:</strong> <ul><li><strong>B. CT within 8 hours:</strong> Correct for a single risk factor only. This child has ≥2 risk factors, so 1-hour imaging is required.</li><li><strong>C/D. Observation alone:</strong> Inadequate because urgent imaging is indicated when multiple risk factors are present.</li><li><strong>E. Discharge with analgesia:</strong> Unsafe; risk of intracranial bleed not excluded.</li></ul>",
+"<strong>Management/algorithm:</strong> <ul><li><strong>Immediate:</strong> Perform A–E, stabilise airway/breathing/circulation, cervical spine precautions.</li><li><strong>Neuro checks:</strong> GCS, pupils, limb power, vitals every 30 min while awaiting CT.</li><li><strong>CT head within 1 hour</strong> as per NICE criteria.</li><li>If CT shows bleed: discuss with neurosurgery, admit under paediatrics/neurosurgery as appropriate.</li><li>If CT normal but symptomatic: admit for observation (usually 12–24 h).</li><li>Provide parental advice leaflet (‘head injury discharge advice’) if discharged.</li></ul>",
+"<strong>Step-by-step realistic ED scenario:</strong> <ul><li><strong>0–1 min:</strong> Primary survey, high-flow O₂ if hypoxic, IV access, monitor HR/SpO₂/BP.</li><li><strong>1–3 min:</strong> Neurological assessment: GCS, pupils, cranial nerves, motor/sensory.</li><li><strong>3–10 min:</strong> Explain need for urgent CT brain, obtain consent from parents, liaise with radiology for immediate slot.</li><li><strong>10–30 min:</strong> Transfer to scanner with monitoring; continue neuro obs.</li><li><strong>30–60 min:</strong> Review CT results. If abnormal, escalate to neurosurgery; if normal but risk factors present, admit for observation.</li><li><strong>Disposition:</strong> Admit or discharge with written head injury advice depending on findings.</li></ul>",
+"<strong>Guideline cues:</strong> NICE CG176: Children with ≥1 risk factor = CT within 1 h; isolated single risk factor = CT within 8 h; no risk factors = observe/discharge with advice.",
+"<strong>Common pitfalls:</strong> <ul><li>Underestimating significance of repeated vomiting.</li><li>Discharging because GCS is 15 — risk factors override normal GCS.</li><li>Delaying CT and missing early intracranial haemorrhage.</li></ul>",
+"<strong>Exam takeaway:</strong> <em>Child with head injury + ≥2 risk factors (e.g., amnesia >5 min + ≥3 vomiting episodes) → urgent CT head within 1 hour.</em>"
+]
+},
+{
+id: "EM-3250",
+topic: "Emergency Medicine",
+difficulty: "Medium",
+vignetteTitle: "Clinical Vignette",
+stem: "A 4 year old child playing with toys unattended suddenly develops breathlessness and stridor and is rushed into the hospital by his father. The child is drooling and unable to swallow. What is the SINGLE best investigation likely to lead to a diagnosis?",
+options: [
+{ key: "A", text: "Laryngoscopy" },
+{ key: "B", text: "Chest X-ray" },
+{ key: "C", text: "Peak flow meter" },
+{ key: "D", text: "Arterial blood gas" },
+{ key: "E", text: "Pulse oximeter" }
+],
+correct: "A",
+explanation_plabable: [
+"Breathlessness and stridor in a child playing with toys is most likely due to aspiration of a foreign body (e.g. a part of the toy) for which indirect laryngoscopy and/or fibre-optic examination of the pharynx would provide a diagnosis.",
+"Remember, the ingestion of foreign bodies is most commonly a problem in young children aged 6 months to 5 years.",
+"Reference: http://patient.info/doctor/swallowed-foreign-bodies"
+],
+explanation_detail: [
+"<strong>Why the answer is correct:</strong> Sudden onset of stridor, drooling, inability to swallow, and acute respiratory distress in a previously well child strongly suggests <strong>upper airway obstruction from foreign body aspiration</strong>. The most definitive way to establish diagnosis is <strong>direct or fibre-optic laryngoscopy</strong>, allowing visualisation of the larynx/pharynx and removal if required. Chest X-ray can sometimes show radio-opaque objects but cannot exclude airway obstruction, and ABG/pulse oximetry provide supportive but not diagnostic information.",
+"<strong>Core pathophysiology/mechanism:</strong> Foreign bodies can lodge in the supraglottic/glottic area → turbulent airflow (stridor), impaired swallowing (drooling), and impending complete obstruction. Inflammatory oedema can worsen obstruction. Children have narrower airways, so even partial obstruction is life-threatening.",
+"<strong>Differential diagnoses:</strong> <ul><li><em>Epiglottitis</em>: also causes stridor and drooling, but usually associated with fever, toxicity, and preceding illness. Now rare with Hib vaccine.</li><li><em>Croup</em>: viral prodrome, barking cough, not sudden onset.</li><li><em>Allergic reaction/angioedema</em>: stridor with urticaria/swelling, often medication or food trigger.</li><li><em>Retropharyngeal abscess</em>: fever, toxic child, neck stiffness, not sudden choking onset.</li></ul>",
+"<strong>Why the other options are wrong:</strong> <ul><li><strong>B. Chest X-ray:</strong> May show foreign body if radio-opaque, or indirect signs (air-trapping, collapse), but cannot reliably diagnose or exclude aspiration.</li><li><strong>C. Peak flow meter:</strong> Not feasible in a distressed child, and not diagnostic of obstruction site.</li><li><strong>D. ABG:</strong> May show hypoxia/hypercapnia but only late; doesn’t confirm cause.</li><li><strong>E. Pulse oximeter:</strong> Detects hypoxia but not the underlying pathology.</li></ul>",
+"<strong>Management/algorithm:</strong> <ul><li><strong>Immediate:</strong> A–E assessment, high-flow O₂ if tolerated, keep child upright on parent’s lap, avoid upsetting child (crying worsens obstruction).</li><li><strong>Airway team:</strong> Call anaesthetics/ENT urgently.</li><li><strong>Laryngoscopy</strong> in theatre with skilled anaesthetist and ENT surgeon, with equipment for rigid bronchoscopy and emergency tracheostomy.</li><li>If complete obstruction develops: choking algorithm (back blows, chest thrusts for infants, abdominal thrusts for older children).</li><li>Do not attempt blind finger sweeps as they risk pushing object deeper.</li></ul>",
+"<strong>Step-by-step realistic ED scenario:</strong> <ul><li><strong>0–1 min:</strong> Rapid A–E, identify stridor/drooling, sit child upright, call senior help (anaesthetics/ENT).</li><li><strong>1–3 min:</strong> Administer O₂, keep child calm, prepare airway equipment.</li><li><strong>3–10 min:</strong> Transfer urgently to theatre; anaesthetist maintains airway while ENT performs <strong>laryngoscopy</strong> and removes foreign body.</li><li><strong>10–30 min:</strong> Post-removal: monitor in recovery/HDU, check for laryngeal trauma, give steroids if oedema risk.</li><li><strong>30–60 min:</strong> Educate parents on choking hazards, advise follow-up if airway injury suspected.</li></ul>",
+"<strong>Guideline cues:</strong> RCEM and RCPCH guidelines: any suspected inhaled foreign body with stridor/drooling = ENT referral and diagnostic laryngoscopy. Do not delay with unnecessary investigations like chest X-ray if suspicion is high.",
+"<strong>Common pitfalls:</strong> <ul><li>Ordering chest X-ray first and delaying definitive airway assessment.</li><li>Upsetting child by repeated IV attempts before airway secure.</li><li>Misdiagnosing as croup when onset is sudden with choking episode.</li></ul>",
+"<strong>Exam takeaway:</strong> <em>Child with sudden stridor, drooling, and choking after playing with toys = foreign body aspiration → definitive diagnosis via laryngoscopy.</em>"
+]
+},
+{
+id: "EM-0306",
+topic: "Emergency Medicine",
+difficulty: "Easy",
+vignetteTitle: "Clinical Vignette",
+stem: "A 23 year old single male was brought to emergency department by his father exhausted and frightened. His father tells you that his son, who was previously healthy, had, for no apparent reason, a sudden attack of fear, dizziness, sweating, palpitations and the feeling that his heart is going to stop beating. The symptoms started to decrease gradually after about 10 minutes. Which is the SINGLE most likely diagnosis?",
+options: [
+{ key: "A", text: "Panic attack" },
+{ key: "B", text: "Delirious state" },
+{ key: "C", text: "Alcohol withdrawal" },
+{ key: "D", text: "Drug overdose" },
+{ key: "E", text: "Phaeochromocytoma" }
+],
+correct: "A",
+explanation_plabable: [
+"Panic attacks usually have a fast onset and resolve quickly as well. They usually take about 10 minutes to peak and then followed by resolution over the next 20 minutes.",
+"Some attacks may be situational such as in specific scenarios where attacks have occurred previously whilst other attacks may be spontaneous and described as 'out of the blue' which is seen in this stem."
+],
+explanation_detail: [
+"<strong>Why the answer is correct:</strong> The sudden onset of fear, palpitations, dizziness, sweating, and the feeling of impending death with rapid resolution within 20–30 minutes is classic for a <strong>panic attack</strong>. These episodes are discrete, reach peak intensity in about 10 minutes, and resolve spontaneously. The lack of chronic illness, drug/alcohol history, or ongoing confusion further supports panic attack.",
+"<strong>Core pathophysiology/mechanism:</strong> Panic attacks are thought to involve dysregulation of the amygdala and limbic system with excessive sympathetic discharge. This results in acute catecholamine-driven symptoms such as tachycardia, diaphoresis, hyperventilation, and chest tightness. Hyperventilation may also cause dizziness and paraesthesia due to respiratory alkalosis.",
+"<strong>Differential diagnoses:</strong> <ul><li><strong>Phaeochromocytoma:</strong> causes paroxysms of sweating, palpitations, hypertension but typically recurrent and linked with high BP spikes, not a single 10-minute event.</li><li><strong>Alcohol withdrawal:</strong> occurs 6–24 h after cessation in dependent patients with tremor, agitation, hallucinations; history absent here.</li><li><strong>Drug overdose:</strong> tends to cause prolonged or progressive toxicity, not sudden-onset brief panic-like symptoms.</li><li><strong>Delirium:</strong> develops subacutely with fluctuating consciousness, attention deficits, and confusion; not an acute isolated event.</li></ul>",
+"<strong>Why the other options are wrong:</strong> <ul><li><strong>B. Delirious state:</strong> Requires prolonged disturbance in consciousness/attention, not episodic symptoms.</li><li><strong>C. Alcohol withdrawal:</strong> No history of alcohol dependence or recent cessation.</li><li><strong>D. Drug overdose:</strong> Would produce ongoing toxic features, not self-limited resolution.</li><li><strong>E. Phaeochromocytoma:</strong> Recurrent hypertension/episodes over time, not a one-off presentation.</li></ul>",
+"<strong>Management/algorithm:</strong> <ul><li><strong>Acute:</strong> Reassure, calm environment, encourage slow breathing to correct hyperventilation.</li><li>Exclude organic mimics: ECG, glucose, vitals to rule out arrhythmia, hypoglycaemia, thyrotoxicosis.</li><li><strong>If recurrent:</strong> Refer to GP/psychiatry. First-line treatment: <strong>Cognitive Behavioural Therapy (CBT)</strong>.</li><li>SSRIs (e.g., sertraline) if persistent/panic disorder; benzodiazepines may be used short-term but not long-term due to dependence risk.</li></ul>",
+"<strong>Step-by-step realistic ED scenario:</strong> <ul><li><strong>0–1 min:</strong> Assess ABCs, monitor vitals, check capillary glucose.</li><li><strong>1–3 min:</strong> Brief targeted exam to exclude organic causes (arrhythmia, asthma attack, seizure).</li><li><strong>3–10 min:</strong> Provide reassurance, guide patient through breathing techniques.</li><li><strong>10–30 min:</strong> Observe until full resolution; offer explanation to patient/family.</li><li><strong>Disposition:</strong> If single isolated panic attack and no red flags, discharge with GP follow-up and advice on stress reduction. If recurrent/severe, refer for mental health input.</li></ul>",
+"<strong>Guideline cues:</strong> NICE guidance recommends <strong>CBT as first-line</strong> for panic disorder; SSRIs are pharmacological first-line if needed. Rule out organic causes before diagnosing panic attack in ED.",
+"<strong>Common pitfalls:</strong> <ul><li>Misdiagnosing cardiac/respiratory causes as panic attack.</li><li>Over-investigation without clinical suspicion.</li><li>Discharging without explanation or follow-up plan, leading to patient anxiety and reattendance.</li></ul>",
+"<strong>Exam takeaway:</strong> <em>Sudden self-limiting episode of palpitations, fear, dizziness, and sweating resolving in 20–30 minutes in a healthy young adult = Panic attack.</em>"
+]
+},
+{
+id: "EM-0307",
+topic: "Emergency Medicine",
+difficulty: "Medium",
+vignetteTitle: "Clinical Vignette",
+stem: "A 33 year old woman has recurring tightness in her chest accompanied by palpitations and sweating. These episodes occur several times a week and are associated with increased respiratory rate and tingling and numbness around the mouth and fingers. What is the SINGLE most likely diagnosis?",
+options: [
+{ key: "A", text: "Hypercalcaemia" },
+{ key: "B", text: "Stable angina" },
+{ key: "C", text: "Panic attack" },
+{ key: "D", text: "Gastro-oesophageal reflux disease" },
+{ key: "E", text: "Prinzmetal's angina" }
+],
+correct: "C",
+explanation_plabable: [
+"In panic attacks, perioral paraesthesia, tingling and numbness in the hands can occur due to hyperventilation and CO₂ washout leading to low ionic calcium. The description of tightening with palpitations fits with panic attacks."
+],
+explanation_detail: [
+"<strong>Why the answer is correct:</strong> The recurrent episodes of chest tightness, palpitations, sweating, and hyperventilation with perioral paraesthesia and distal tingling are classical for <strong>panic attacks</strong>. The neurological symptoms are due to respiratory alkalosis from hyperventilation, which lowers ionised calcium, causing tingling and numbness. The recurrent, self-limiting nature without exertional trigger rules out cardiac pathology.",
+"<strong>Core pathophysiology/mechanism:</strong> Panic disorder is characterised by sudden surges of intense fear or discomfort, associated with sympathetic overdrive (palpitations, sweating, tremors) and hyperventilation. Hypocapnia from hyperventilation causes cerebral vasoconstriction (dizziness, confusion) and reduced ionised calcium (perioral and digital paraesthesia).",
+"<strong>Differential diagnoses:</strong> <ul><li><strong>Hypercalcaemia:</strong> Causes constipation, polyuria, confusion, abdominal pain—not episodic panic-like features.</li><li><strong>Stable angina:</strong> Predictable exertional chest pain, relieved by rest/nitrates; not associated with tingling or panic-like autonomic symptoms.</li><li><strong>GORD:</strong> Retrosternal burning post-prandially, worse lying flat; not associated with paraesthesia.</li><li><strong>Prinzmetal's angina:</strong> Chest pain at rest due to coronary spasm; ECG shows transient ST elevation, no paraesthesia.</li></ul>",
+"<strong>Why the other options are wrong:</strong> <ul><li>A. Hypercalcaemia causes chronic systemic symptoms, not recurrent acute episodes with panic-like features.</li><li>B. Stable angina is exertional and predictable, not sudden-onset with hyperventilation.</li><li>D. GORD causes heartburn/regurgitation, no neurological signs.</li><li>E. Prinzmetal's angina would present with ischaemic ECG changes, not tingling or numbness.</li></ul>",
+"<strong>Management/algorithm:</strong> <ul><li><strong>Acute episode:</strong> Calm reassurance, quiet environment, encourage slow rebreathing to reduce hypocapnia.</li><li>Exclude acute organic pathology (ECG, glucose, electrolytes, thyroid if indicated).</li><li><strong>First-line long-term:</strong> Cognitive Behavioural Therapy (CBT).</li><li><strong>Pharmacological:</strong> SSRIs (sertraline, citalopram) if persistent/severe; short-term benzodiazepines only if disabling and refractory.</li><li>Address lifestyle: sleep hygiene, caffeine/alcohol reduction, stress management.</li></ul>",
+"<strong>Step-by-step realistic ED scenario:</strong> <ul><li><strong>0–1 min:</strong> Primary survey, vitals, ECG to rule out ACS.</li><li><strong>1–3 min:</strong> Observe hyperventilation; bedside reassurance, encourage controlled breathing.</li><li><strong>3–10 min:</strong> Explain likely panic attack to patient and family, normal investigations.</li><li><strong>10–30 min:</strong> Observe until symptoms resolve; safety-net for recurrence.</li><li><strong>Disposition:</strong> Discharge with GP follow-up for CBT referral, consider SSRI initiation if recurrent.</li></ul>",
+"<strong>Guideline cues:</strong> NICE recommends <strong>CBT as first-line</strong> for panic disorder, SSRIs if pharmacological therapy needed. Always exclude cardiac, endocrine, and metabolic causes on first presentation.",
+"<strong>Common pitfalls:</strong> <ul><li>Attributing chest pain to panic without excluding ACS on first presentation.</li><li>Over-investigating recurrent attacks once diagnosis is clear.</li><li>Using benzodiazepines long-term, leading to dependence.</li></ul>",
+"<strong>Exam takeaway:</strong> <em>Recurrent chest tightness with hyperventilation-induced tingling and perioral paraesthesia = panic attacks, not cardiac or metabolic disease.</em>"
+]
+},
+{
+id: "EM-1009",
+topic: "Emergency Medicine",
+difficulty: "Hard",
+vignetteTitle: "Clinical Vignette",
+stem: "An 18 year old female was brought into the ED after ingestion of 28 paracetamol tablets after breaking up with her boyfriend. She came in confused and unwell. She was admitted in the medical ward and N-Acetylcysteine was given. 24 hours later, her laboratory results show a normal FBC, an arterial pH of <strong>7.1</strong>, Prothrombin time of <strong>17 seconds</strong> and creatinine of <strong>255µmol/L</strong>. She is still confused and lethargic. What is the SINGLE most appropriate management?<br/><br/>Normal Lab values:<br/>Creatinine: <strong>70–150 µmol/L</strong><br/>pH: <strong>7.35–7.45</strong><br/>Prothrombin time (PT): <strong>11–14 sec</strong>",
+options: [
+{ key: "A", text: "Observe for another 24 hours" },
+{ key: "B", text: "Admit to psychiatric ward" },
+{ key: "C", text: "Intravenous fluids" },
+{ key: "D", text: "Administer charcoal" },
+{ key: "E", text: "Liver transplantation" }
+],
+correct: "E",
+explanation_plabable: [
+"Her arterial pH is 7.1 which is an indication for liver transplantation.",
+"King’s College Hospital criteria for liver transplantation (paracetamol liver failure):<br/>• arterial pH < 7.3, 24 hours after ingestion OR all of the following:<br/>– prothrombin time > 100 seconds<br/>– creatinine > 300 µmol/L<br/>– grade III or IV encephalopathy",
+"Generally, if one takes more than 24 tablets (12 g), we admit. Paracetamol poisoning is always dealt in the medical ward (not psychiatry ward). Only once treated and stable can they move to a psychiatric ward for evaluation.",
+"In reality, grafts are not readily available and much research is being conducted to try and maintain the patient in a stable condition until a suitable graft is available or spontaneous regeneration occurs and the patient recovers without transplantation."
+],
+explanation_detail: [
+"<strong>Why the answer is correct:</strong> This patient ingested a potentially lethal dose of paracetamol and now, 24 hours later, fulfils <strong>King’s College criteria</strong> for urgent liver transplantation: arterial pH <7.3, creatinine >300 µmol/L (close at 255 µmol/L), prolonged PT, and clinical encephalopathy (confusion, lethargy). NAC has already been given but severe hepatic failure has developed. The only life-saving option is <strong>liver transplantation</strong>.",
+"<strong>Core pathophysiology/mechanism:</strong> In overdose, paracetamol saturates glucuronidation/sulfation pathways, shunting metabolism to cytochrome P450 → toxic metabolite NAPQI. With glutathione depletion, NAPQI accumulates, causing centrilobular hepatic necrosis and multiorgan failure. Severe acidosis (pH <7.3) indicates overwhelming metabolic failure and is a poor prognostic marker.",
+"<strong>Differential diagnoses:</strong> <ul><li><strong>Alcoholic hepatitis:</strong> Requires alcohol history, not acute overdose.</li><li><strong>Viral hepatitis:</strong> More gradual onset, no NAC use, not associated with acute acidosis.</li><li><strong>Sepsis with lactic acidosis:</strong> Possible but here clear paracetamol history with NAC given.</li><li><strong>Other overdoses:</strong> Aspirin can cause acidosis but no tinnitus or mixed alkalosis/acidosis picture here.</li></ul>",
+"<strong>Why the other options are wrong:</strong> <ul><li><strong>A. Observe another 24 h:</strong> Unsafe, patient already meets poor prognostic criteria.</li><li><strong>B. Psychiatric admission:</strong> Appropriate <em>after</em> stabilisation; not while in fulminant hepatic failure.</li><li><strong>C. IV fluids:</strong> Supportive but not definitive; does not reverse fulminant liver failure.</li><li><strong>D. Activated charcoal:</strong> Ineffective at 24 h post-ingestion, benefit only within 1 h of ingestion.</li></ul>",
+"<strong>Management/algorithm:</strong> <ul><li><strong>Immediate:</strong> Supportive care in ICU, NAC already given, monitor vitals, electrolytes, glucose, clotting.</li><li><strong>Urgent referral to transplant centre</strong> as per King’s criteria.</li><li>Continue NAC until definitive decision made (supports antioxidant capacity even late).</li><li>Correct hypoglycaemia with IV 10–20% dextrose infusion; monitor hourly glucose.</li><li>Treat coagulopathy with vitamin K and FFP if bleeding.</li><li>Monitor for cerebral oedema; consider mannitol or hypertonic saline if signs of raised ICP.</li></ul>",
+"<strong>Step-by-step realistic ED scenario:</strong> <ul><li><strong>0–1 min:</strong> ABC stabilisation, oxygen, IV access, continuous monitoring, bedside glucose.</li><li><strong>1–3 min:</strong> Review labs (pH 7.1, raised creatinine, prolonged PT) confirming King’s criteria.</li><li><strong>3–10 min:</strong> Call national liver transplant centre, arrange urgent transfer.</li><li><strong>10–30 min:</strong> Continue NAC infusion, start IV dextrose, correct electrolytes.</li><li><strong>30–60 min:</strong> Admit to ICU for airway/ventilation support, monitor for cerebral oedema, liaise with transplant surgeons.</li><li><strong>Disposition:</strong> Transfer to transplant unit for definitive management.</li></ul>",
+"<strong>Guideline cues:</strong> King’s College criteria (for paracetamol liver failure): arterial pH <7.3 at 24 h OR all three of: PT >100s, creatinine >300 µmol/L, and grade III/IV encephalopathy. This patient already fulfils these criteria.",
+"<strong>Common pitfalls:</strong> <ul><li>Delaying transplant referral until multi-organ failure is advanced.</li><li>Stopping NAC once liver failure established — it should be continued until transplant.</li><li>Admitting to psychiatry before medical stabilisation.</li></ul>",
+"<strong>Exam takeaway:</strong> <em>Paracetamol overdose with pH <7.3 after 24 h = King’s College criteria → urgent liver transplantation referral.</em>"
+]
+},
+{
+id: "SS-0046",
+topic: "Emergency Medicine",
+difficulty: "Medium",
+vignetteTitle: "Clinical Vignette",
+stem: "A 24 year old male presents to A&E with 40% partial thickness burns after having been in a house fire. His pulse rate is 115 bpm and respiratory rate is 29 breaths per minute. His systolic blood pressure is 80 mmHg. What is the SINGLE most appropriate management?",
+options: [
+{ key: "A", text: "IV fluids calculated from the time of hospital arrival" },
+{ key: "B", text: "IV fluids calculated from the time of burn" },
+{ key: "C", text: "Oral rehydration" },
+{ key: "D", text: "IV dextrose stat" },
+{ key: "E", text: "IV morphine" }
+],
+correct: "B",
+explanation_plabable: [
+"These are the steps that you need to know for the treatment of burns for the exam. Note the order:",
+"1. Large-calibre intravenous lines must be established immediately in a peripheral vein. Any adult with burns affecting more than 15% of the total body surface area burned or a child with more than 10% of the total body surface area burned requires fluid replacement calculated from the time of the burn.",
+"2. Ensure adequate analgesia: strong opiates should be used.",
+"3. Prevent hypothermia."
+],
+explanation_detail: [
+"<strong>Why the answer is correct:</strong> Adults with burns covering >15% TBSA require IV fluid resuscitation. In this case, the patient has 40% TBSA burns and is already hypotensive (SBP 80 mmHg). The Parkland formula is used to guide resuscitation: <strong>4 mL × body weight (kg) × %TBSA</strong> = total fluids in 24 h, with half given in the first 8 h <em>from the time of burn</em>, not hospital arrival. Delaying resuscitation risks worsening hypovolaemia and burn shock.",
+"<strong>Core pathophysiology/mechanism:</strong> Severe burns cause capillary leak, plasma loss, and third spacing → intravascular volume depletion → hypovolaemic shock. Prompt fluid replacement prevents organ hypoperfusion, metabolic acidosis, and death. Early resuscitation also reduces risk of acute kidney injury and improves outcomes.",
+"<strong>Differential diagnoses:</strong> <ul><li><em>Smoke inhalation injury:</em> common in house fires, but airway compromise is managed alongside fluid resuscitation, not instead of it.</li><li><em>Septic shock:</em> unlikely at presentation, occurs later.</li><li><em>Cardiogenic shock:</em> not consistent with history of major burns and tachycardia with hypotension.</li></ul>",
+"<strong>Why the other options are wrong:</strong> <ul><li><strong>A. IV fluids from time of hospital arrival:</strong> Incorrect—calculation starts at burn time; otherwise, under-resuscitation occurs.</li><li><strong>C. Oral rehydration:</strong> Inadequate in major burns with hypovolaemic shock.</li><li><strong>D. IV dextrose stat:</strong> Does not replace fluid losses; risk of hyperglycaemia.</li><li><strong>E. IV morphine:</strong> Analgesia is important, but resuscitation takes priority in unstable patients.</li></ul>",
+"<strong>Management/algorithm:</strong> <ul><li><strong>Immediate:</strong> A–E assessment, airway protection (look for smoke inhalation, carbon monoxide), high-flow oxygen, 2 large-bore IV cannulae.</li><li>Calculate fluid requirement using Parkland formula: <strong>4 mL × weight (kg) × %TBSA</strong>.</li><li>Give half within 8 h from burn onset; remaining half over next 16 h.</li><li>Fluid of choice: <strong>Ringer’s lactate</strong> (Hartmann’s). Aim urine output 0.5–1 mL/kg/h.</li><li>Provide IV opioids for analgesia once circulation secured.</li><li>Cover burns with cling film/sterile sheets; prevent hypothermia.</li><li>Tetanus prophylaxis as indicated.</li></ul>",
+"<strong>Step-by-step realistic ED scenario:</strong> <ul><li><strong>0–1 min:</strong> Primary survey, high-flow O₂, remove burnt clothing, estimate %TBSA using Wallace rule of nines.</li><li><strong>1–3 min:</strong> Insert 2 large-bore IVs, take bloods (FBC, U&E, ABG, COHb).</li><li><strong>3–10 min:</strong> Begin fluid resuscitation per Parkland formula, calculating from burn time; start Hartmann’s.</li><li><strong>10–30 min:</strong> Insert urinary catheter; monitor urine output hourly. Provide IV morphine for analgesia.</li><li><strong>30–60 min:</strong> Ongoing reassessment: vitals, fluid balance, repeat ABG. Cover burns with sterile sheets; prevent hypothermia.</li><li><strong>Disposition:</strong> Admit to burns unit/ICU, arrange transfer if needed.</li></ul>",
+"<strong>Guideline cues:</strong> Advanced Trauma Life Support (ATLS) and British Burn Association recommend immediate IV resuscitation for adults >15% TBSA burns, calculated from burn time, with Hartmann’s as preferred fluid.",
+"<strong>Common pitfalls:</strong> <ul><li>Calculating fluids from hospital arrival rather than time of burn.</li><li>Failing to monitor urine output, leading to over/under-resuscitation.</li><li>Delaying airway assessment in smoke inhalation cases.</li></ul>",
+"<strong>Exam takeaway:</strong> <em>Burns >15% TBSA in adults → IV fluids calculated from burn time using Parkland formula; airway and analgesia follow immediately after.</em>"
+]
+}
 
 
 
