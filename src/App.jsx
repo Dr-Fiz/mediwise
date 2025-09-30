@@ -39,6 +39,7 @@ import Palliative from "./pages/diseases/Palliative.jsx";
  * ========================= */
 import DementiaAlzheimers from "./pages/diseases/geriatrics/DementiaAlzheimers.jsx";
 import VascularDementia from "./pages/diseases/geriatrics/VascularDementia.jsx";
+import DementiaLewyBodies from "./pages/diseases/geriatrics/DementiaLewyBodies.jsx";
 
 export default function App() {
   return (
@@ -87,6 +88,10 @@ export default function App() {
       <Route
         path="/diseases/geriatrics/vascular-dementia"
         element={<VascularDementia />}
+      />
+      <Route
+        path="/diseases/geriatrics/dementia-lewy-bodies"
+        element={<DementiaLewyBodies />}
       />
     </Routes>
   );
