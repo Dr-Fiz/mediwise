@@ -1,873 +1,680 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+// src/pages/diseases/geriatrics/VascularDementia.jsx
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-/* ------------------------ Question Data ------------------------ */
-/* NOTE: Add images in /public and set q.image = "/file.png" if needed */
+/** ---------------- Inline RichText (bold/italics + color chips) ---------------- */
+function RichText({ text = "" }) {
+  let html = String(text);
+
+  // escape raw < > & but keep our tags
+  html = html
+    .replace(/&(?![a-zA-Z#0-9]+;)/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  // **bold** and *italic* / _italic_
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/(^|[^*])\*(?!\*)(.+?)\*(?!\*)/g, "$1<em>$2</em>");
+  html = html.replace(/_(.+?)_/g, "<em>$1</em>");
+
+  // ==yellow highlight==
+  html = html.replace(
+    /==(.+?)==/g,
+    "<mark style='background-color:#FEF3C7' class='px-1 rounded'>$1</mark>"
+  );
+
+  // [yellow]...[/yellow], [green]...[/green], etc.
+  const palette = {
+    yellow: "#FEF3C7",
+    green: "#D1FAE5",
+    blue: "#E0F2FE",
+    red: "#FFE4E6",
+    purple: "#EDE9FE",
+  };
+  Object.entries(palette).forEach(([name, bg]) => {
+    const re = new RegExp(`\\[${name}\\]([\\s\\S]+?)\\[\\/${name}\\]`, "gi");
+    html = html.replace(
+      re,
+      `<mark style="background-color:${bg}" class="px-1 rounded">$1</mark>`
+    );
+  });
+
+  // unescape our intended tags
+  html = html
+    .replace(/&lt;strong&gt;/g, "<strong>")
+    .replace(/&lt;\/strong&gt;/g, "</strong>")
+    .replace(/&lt;em&gt;/g, "<em>")
+    .replace(/&lt;\/em&gt;/g, "</em>")
+    .replace(/&lt;mark /g, "<mark ")
+    .replace(/&lt;\/mark&gt;/g, "</mark>");
+
+  return <span dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+/* ------------------------ Vascular Dementia Question Bank ------------------------ */
+/* Add images in /public and set q.image = "/file.png" if you want figures */
 const QUESTIONS = [
   {
-    id: "VaD-2001",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Easy",
-    vignetteTitle: "Presentation pattern",
-    stem:
-      "A 78-year-old man has cognitive decline over 3 years following multiple TIAs. " +
-      "Family report stepwise deterioration and early executive dysfunction. Neuro exam shows mild right-sided weakness and brisk reflexes. " +
-      "Which SINGLE clinical pattern most supports vascular dementia over Alzheimer’s disease?",
+    id: "VaD-DEF-30001",
+    topic: "Geriatrics • Vascular dementia — Definition & Core Concept",
+    difficulty: "Medium",
+    vignetteTitle: "What exactly is vascular dementia?",
+    stem: "A 78-year-old with hypertension, diabetes, and atrial fibrillation has stepwise cognitive decline after several TIAs and one lacunar stroke. He has slowed thinking, impaired executive function, and focal exam findings (right pronator drift, brisk reflexes). MRI shows multiple lacunes and confluent periventricular white-matter hyperintensities. Which definition best captures the **core concept** of vascular dementia?",
     options: [
       {
         key: "A",
-        text: "Gradual purely amnestic decline with preserved executive function",
+        text: "A progressive neurodegenerative disorder defined by amyloid-β plaques and tau tangles causing hippocampal-predominant memory loss",
       },
       {
         key: "B",
-        text: "Early visuospatial neglect with visual hallucinations",
+        text: "Cognitive impairment due to cerebrovascular brain injury (infarcts, hemorrhage, or ischemic white-matter disease) with a temporal/pathophysiologic link between vascular events and cognitive decline",
       },
       {
         key: "C",
-        text: "Stepwise decline with focal neurological signs and dysexecutive syndrome",
-      }, // correct
-      { key: "D", text: "Early behavioural disinhibition and loss of empathy" },
-      { key: "E", text: "Rapidly progressive myoclonus and akinetic mutism" },
-    ],
-    correct: "C",
-    explanation_detail: [
-      "Vascular dementia (VaD) often shows a *stepwise* course tied to clinical strokes/TIAs, with early executive dysfunction (planning, processing speed) rather than a purely amnestic picture.",
-      "Focal neurological signs (e.g., hemiparesis, brisk reflexes, dysarthria) reflect accumulated infarcts. Alzheimer’s is typically insidious and amnestic; Lewy body disease features visual hallucinations and fluctuations; FTD has early behavioural/language change; rapidly progressive myoclonus suggests prion disease.",
-    ],
-  },
-  {
-    id: "VaD-2002",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Medium",
-    vignetteTitle: "Neuroimaging",
-    stem:
-      "A 74-year-old woman with cognitive impairment undergoes MRI. " +
-      "Which SINGLE radiologic pattern most supports a vascular aetiology?",
-    options: [
-      {
-        key: "A",
-        text: "Bilateral hippocampal/medial temporal atrophy with parietal involvement",
+        text: "A primary language-led dementia with selective degeneration of the anterior temporal lobes",
       },
-      {
-        key: "B",
-        text: "Confluent periventricular white matter hyperintensities with lacunes and microbleeds",
-      }, // correct
-      {
-        key: "C",
-        text: "Marked occipital hypometabolism with preserved medial temporal lobes",
-      },
-      { key: "D", text: "Pronounced anterior temporal and frontal atrophy" },
-      {
-        key: "E",
-        text: "Symmetric basal ganglia calcifications without WM change",
-      },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "Small-vessel ischaemic disease underpins many VaD cases: MRI commonly shows periventricular and deep white-matter hyperintensities, lacunar infarcts, and sometimes microbleeds (on susceptibility sequences).",
-      "Medial temporal atrophy supports Alzheimer’s; occipital involvement suggests Lewy body disease; anterior temporal/frontal atrophy suggests FTD; basal ganglia calcifications are nonspecific (consider metabolic or idiopathic).",
-    ],
-  },
-  {
-    id: "VaD-2003",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Medium",
-    vignetteTitle: "Secondary prevention",
-    stem:
-      "A 79-year-old man with vascular dementia and a prior lacunar stroke has persistent atrial fibrillation (CHA₂DS₂-VASc = 5, HAS-BLED = 2). " +
-      "What is the SINGLE most appropriate antithrombotic strategy for stroke prevention?",
-    options: [
-      {
-        key: "A",
-        text: "Dual antiplatelet therapy (aspirin + clopidogrel) indefinitely",
-      },
-      { key: "B", text: "Aspirin alone" },
-      {
-        key: "C",
-        text: "Oral anticoagulation (e.g., a DOAC) unless contraindicated",
-      }, // correct
-      { key: "D", text: "No antithrombotic due to dementia" },
-      { key: "E", text: "Low-dose LMWH long term" },
-    ],
-    correct: "C",
-    explanation_detail: [
-      "In AF with high thromboembolic risk (CHA₂DS₂-VASc ≥2 in men), oral anticoagulation reduces stroke risk and is indicated unless contraindicated. Dementia alone is not a reason to omit therapy; weigh bleeding risk, falls risk, and adherence.",
-      "Dual antiplatelet is not standard long-term for AF stroke prevention. LMWH is not used chronically for non-valvular AF outside special scenarios (e.g., bridging).",
-    ],
-  },
-  {
-    id: "VaD-2004",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Medium",
-    vignetteTitle: "Mixed pathology",
-    stem:
-      "A 72-year-old woman with MRI-proven small-vessel disease has cognitive decline with amnestic and executive deficits, suggesting mixed Alzheimer’s/vascular pathology. " +
-      "Which SINGLE therapy is the most reasonable to trial for symptomatic cognitive benefit after addressing stroke prevention and risk factors?",
-    options: [
-      { key: "A", text: "High-dose haloperidol nightly" },
-      { key: "B", text: "Cholinesterase inhibitor (e.g., donepezil) trial" }, // correct
-      {
-        key: "C",
-        text: "No treatment—cognitive drugs are ineffective in vascular involvement",
-      },
-      { key: "D", text: "High-dose vitamin E" },
-      { key: "E", text: "Topiramate for cognition" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "In *mixed* Alzheimer’s/vascular cases, a trial of a cholinesterase inhibitor (or memantine) is reasonable for symptomatic benefit. Evidence for pure VaD is limited, but mixed pathology is common in older adults.",
-      "Optimise vascular risk (BP, lipids, diabetes), institute antiplatelet/anticoagulation where indicated, encourage exercise and cognitive stimulation. Avoid routine antipsychotics; reserve for severe distress/psychosis after non-drug measures.",
-    ],
-  },
-  {
-    id: "VD-1001",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Easy",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 72-year-old man with a history of hypertension and diabetes presents with stepwise cognitive decline over the past 2 years, including difficulty with planning and sudden worsening after a recent stroke. He has mild left hemiparesis and an MMSE score of 22/30, with deficits in executive function. Brain MRI shows multiple lacunar infarcts and white matter hyperintensities. Which SINGLE clinical feature is most characteristic of vascular dementia in this patient?",
-    options: [
-      { key: "A", text: "Gradual memory loss without focal signs" },
-      {
-        key: "B",
-        text: "Stepwise cognitive decline with vascular risk factors and focal neurological deficits",
-      }, // correct
-      { key: "C", text: "Early personality changes and social disinhibition" },
-      { key: "D", text: "Prominent language deficits with preserved memory" },
-      { key: "E", text: "Visual hallucinations and fluctuating cognition" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Vascular dementia (VaD) is characterized by stepwise cognitive decline linked to cerebrovascular events, often with vascular risk factors (e.g., hypertension, diabetes) and focal neurological signs (e.g., hemiparesis). This reflects impaired cerebral blood flow from strokes or small vessel disease, affecting executive function more than memory early on.",
-      "🧠 **Clinical considerations**: The MMSE score of 22/30 indicates mild-moderate VaD. MRI showing lacunar infarcts and white matter hyperintensities supports diagnosis, with Hachinski Ischemic Score (>7) favoring VaD over AD. Prevalence of VaD is ~15-20% of dementia cases, often mixed with AD. Differential includes Alzheimer’s (gradual memory loss) and Lewy body dementia (hallucinations). Management focuses on vascular risk control (e.g., antihypertensives, statins) to prevent progression.",
-      "❌ **Why not others**: Gradual memory loss (A) is typical of AD, not VaD’s stepwise pattern. Personality changes (C) suggest FTD. Language deficits with preserved memory (D) indicate primary progressive aphasia. Hallucinations and fluctuation (E) are for Lewy body dementia.",
-    ],
-  },
-  {
-    id: "VD-1002",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 75-year-old woman with a 3-year history of vascular dementia presents with worsening executive dysfunction and gait instability. She has a history of multiple TIAs, hypertension, and an MMSE score of 18/30. Brain MRI shows periventricular white matter changes. She is on aspirin and lisinopril. Which SINGLE management strategy is most appropriate for her moderate vascular dementia?",
-    options: [
-      { key: "A", text: "Start donepezil to improve memory" },
-      {
-        key: "B",
-        text: "Optimize vascular risk factor control with blood pressure management and antiplatelet therapy",
-      }, // correct
-      { key: "C", text: "Initiate memantine for behavioral symptoms" },
       {
         key: "D",
-        text: "Recommend cognitive behavioral therapy as primary treatment",
+        text: "A rapidly progressive dementia caused by prion protein misfolding with myoclonus and characteristic EEG changes",
       },
       {
         key: "E",
-        text: "Prescribe a low-dose antipsychotic for gait instability",
+        text: "A neurodegenerative synucleinopathy with early visual hallucinations, cognitive fluctuations, and spontaneous parkinsonism",
       },
     ],
     correct: "B",
     explanation_detail: [
-      "🌟 **First principles**: Moderate vascular dementia (VaD) management prioritizes preventing further vascular events through control of risk factors like hypertension and use of antiplatelets (e.g., aspirin), as cognitive decline is driven by cerebrovascular disease. This halts progression, unlike in AD where symptomatic treatments predominate.",
-      "🧠 **Management considerations**: The MMSE score of 18/30 and white matter changes confirm moderate VaD. Blood pressure targets (<130/80 mmHg) reduce stroke risk by ~30%. Antiplatelets prevent TIAs. Cholinesterase inhibitors like donepezil show modest benefits in VaD (~50% of mixed VaD/AD cases). Physical therapy addresses gait instability, common in ~40% of VaD patients. Differential includes normal pressure hydrocephalus (triad of symptoms). Annual monitoring with MMSE tracks progression.",
-      "❌ **Why not others**: Donepezil (A) is for AD; limited evidence in pure VaD. Memantine (C) is for moderate-severe AD, not first-line for VaD. CBT (D) is adjunctive, not primary. Antipsychotics (E) are for severe agitation, not gait issues, and increase stroke risk.",
+      "**1️⃣ Why it is the correct answer**",
+      "- **Vascular dementia (VaD)** = **major neurocognitive disorder due to vascular disease**: cognitive/functional decline caused by **cerebrovascular brain injury** (large/small infarcts, hemorrhage, **ischemic white-matter disease**).",
+      "- The diagnosis requires a **clinical–radiologic link**: timing (onset after stroke or stepwise with TIAs), **focal neurological signs**, and **imaging evidence** of vascular lesions explaining the deficits.",
+      "- Typical phenotype emphasizes **processing speed/executive dysfunction** > pure amnestic loss, with **gait disturbance**, pseudobulbar affect, urinary urgency in subcortical forms.",
+      "- Course can be **stepwise**, **fluctuating**, or insidiously progressive when small-vessel disease accumulates. [yellow]Core concept: brain network damage from vascular hits → cognitive impairment[/yellow]. 🧠🩸",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A (Alzheimer’s):** Describes **amyloid/tau** neurodegeneration with hippocampal memory-first decline—**not vascular injury**.",
+      "- **C (svPPA):** Language-led semantic loss from anterior temporal degeneration—**non-vascular**.",
+      "- **D (Prion disease):** **Rapid** course with myoclonus and periodic EEG; not a vascular mechanism.",
+      "- **E (DLB):** **Hallucinations, fluctuations, parkinsonism** from α-synuclein; vascular lesions are not the driver.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Bedside cognitive profile (MoCA with **executive/attention** items), full neuro exam for **focal deficits**; vascular risk review. **Confirms?** ❌ Suggests VaD pattern.",
+      "- **Next Diagnostic step:** 🧠 **MRI brain** (preferred over CT) → [blue]lacunes, cortical/subcortical infarcts, microbleeds, and white-matter hyperintensities[/blue] in a distribution matching deficits. **Confirms?** ➕ Supports VaD when lesions explain cognition.",
+      "- **Best Diagnostic Step:** **Establish cerebrovascular causality**: correlate timeline (post-stroke decline/stepwise course) + imaging burden/strategic infarcts (e.g., thalamus, caudate) + exclude alternative primary neurodegeneration with **CSF AD biomarkers** or **amyloid PET** if mixed etiology suspected. **Confirms?** ✅ Clinico-radiologic diagnosis of VaD (or mixed).",
+      "- **Adjuncts:** Vascular work-up (ECG/AF, carotid/CTA/MRA, echo for embolic source), labs (lipids/A1c), BP monitoring; screen for sleep apnea.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Aggressive vascular risk control[/green] — BP target per guidelines, statin for ASCVD risk, diabetes management, smoking cessation, exercise, Mediterranean-style diet.",
+      "- **First Line:** [green]Antiplatelet therapy[/green] (single agent) for non-cardioembolic ischemic disease; **anticoagulation** for atrial fibrillation if indicated; **cognitive rehab** focusing on executive strategies; manage gait/balance with PT; treat depression/apathy.",
+      "- **Gold Standard:** No cure; [green]prevent further vascular injury[/green] is paramount. Consider **cholinesterase inhibitor** or **memantine** in *selected* VaD or **mixed AD/VaD** for symptomatic benefit (modest effect). [red]Avoid hypotension/over-sedation[/red] which worsens perfusion/cognition.",
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- **Large-vessel infarcts** (strategic cortex, thalamus) and **small-vessel disease** (lacunes, white-matter ischemia) disconnect **fronto–subcortical circuits** vital for attention, speed, and executive control.",
+      "- **Microvascular pathology** (lipohyalinosis, arteriolosclerosis) and **endothelial dysfunction** reduce network efficiency; recurrent hits produce cumulative cognitive debt.",
+      "- Mixed pathology is common: vascular injury **lowers cognitive reserve** and **unmasks** concomitant Alzheimer changes.",
+      "- [purple]Mnemonic:[/purple] “**S.T.E.P.**” → **S**tepwise decline, **T**IAs/strokes, **E**xecutive slowing, **P**eriventricular WMH.",
+      "**6️⃣ Symptoms — core pattern recognition**",
+      "- **Slowed processing & executive dysfunction** 🐢🧩 → fronto–subcortical disconnection from small-vessel disease.",
+      "- **Gait disturbance & falls** 🚶‍♂️↘️ → subcortical WM involvement (‘lower body parkinsonism’).",
+      "- **Pseudobulbar affect/urinary urgency** 😢/🚻 → descending fiber tract disruption.",
+      "- **Stepwise decline after strokes** ⬇️➡️⬇️ → temporal link to vascular events.",
+      "- [blue]Imaging tie-in:[/blue] lacunes + confluent periventricular WMH or strategic infarcts that **match the deficits**.",
     ],
   },
   {
-    id: "VD-1003",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 70-year-old man with vascular dementia and a history of stroke presents with sudden worsening of confusion, urinary incontinence, and falls. His MMSE score is 15/30. Brain MRI shows acute infarct in the frontal lobe. He is on clopidogrel and atorvastatin. Which SINGLE complication of this patient’s vascular dementia requires immediate attention?",
-    options: [
-      { key: "A", text: "Aspiration pneumonia from swallowing dysfunction" },
-      {
-        key: "B",
-        text: "Recurrent stroke leading to acute neurological deterioration",
-      }, // correct
-      { key: "C", text: "Seizures secondary to cortical damage" },
-      { key: "D", text: "Pressure ulcers from immobility" },
-      { key: "E", text: "Delirium from medication side effects" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Recurrent stroke is a major complication in vascular dementia (VaD), causing sudden worsening of symptoms like confusion and incontinence due to new infarcts disrupting neural circuits. This affects ~30% of VaD patients annually, requiring urgent evaluation to prevent further damage.",
-      "🧠 **Complication considerations**: The MMSE score of 15/30 and frontal infarct confirm VaD progression. Falls and incontinence suggest new stroke, necessitating CT/MRI and thrombolysis if acute. Antiplatelet therapy (clopidogrel) reduces recurrence risk by ~20%. Differential includes delirium (reversible) and seizures (post-stroke, ~10% prevalence). Palliative care may be considered in recurrent cases. Caregiver support addresses burden, as ~50% report stress in VaD.",
-      "❌ **Why not others**: Aspiration pneumonia (A) is more common in severe AD, not VaD. Seizures (C) are possible but not the primary issue here. Pressure ulcers (D) occur in immobility, not acute worsening. Delirium (E) is possible but less likely without triggers; stroke is the acute cause.",
-    ],
-  },
-  {
-    id: "VD-1004",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Easy",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 68-year-old woman with suspected vascular dementia presents with executive dysfunction, apathy, and a history of hypertension. Her MMSE score is 24/30. Blood tests are normal. Which SINGLE investigation is most appropriate to confirm the diagnosis of vascular dementia?",
-    options: [
-      { key: "A", text: "Amyloid PET scan to detect plaques" },
-      {
-        key: "B",
-        text: "Brain MRI to assess for infarcts and white matter changes",
-      }, // correct
-      { key: "C", text: "EEG to evaluate for slowing" },
-      { key: "D", text: "Lumbar puncture for tau biomarkers" },
-      { key: "E", text: "Genetic testing for APOE ε4" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Confirming vascular dementia (VaD) requires imaging evidence of cerebrovascular disease, such as infarcts or white matter hyperintensities on MRI, which has >90% sensitivity for detecting vascular pathology underlying cognitive impairment.",
-      "🧠 **Investigation considerations**: The MMSE score of 24/30 suggests mild VaD. MRI identifies lacunar infarcts or periventricular changes, with Hachinski Score (>7) supporting diagnosis. Hypertension increases VaD risk by ~2x. Differential includes AD (amyloid PET positive) and FTD (frontal atrophy). Carotid ultrasound or CT angiography may follow for large vessel disease. Prevalence of VaD is ~15-20% of dementias, often mixed with AD.",
-      "❌ **Why not others**: Amyloid PET (A) is for AD, not VaD. EEG (C) is for seizures or encephalopathy, not routine. Lumbar puncture (D) assesses AD biomarkers, not vascular. APOE ε4 testing (E) assesses AD risk, not diagnostic for VaD.",
-    ],
-  },
-  {
-    id: "VD-1005",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 73-year-old man with vascular dementia and a history of smoking and hyperlipidemia presents with cognitive impairment. He has no family history of dementia. Brain MRI shows small vessel disease. Which SINGLE etiological factor is most likely contributing to this patient’s vascular dementia?",
-    options: [
-      { key: "A", text: "Autosomal dominant mutations in NOTCH3 gene" },
-      {
-        key: "B",
-        text: "Vascular risk factors like smoking and hyperlipidemia leading to small vessel disease",
-      }, // correct
-      { key: "C", text: "Amyloid-beta accumulation in the hippocampus" },
-      { key: "D", text: "Chronic traumatic brain injury" },
-      { key: "E", text: "Autoimmune-mediated vasculitis" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Vascular dementia (VaD) etiology primarily involves modifiable vascular risk factors (e.g., smoking, hyperlipidemia) causing small vessel disease, atherosclerosis, or infarcts, leading to cognitive impairment through reduced cerebral blood flow.",
-      "🧬 **Etiology considerations**: Smoking increases VaD risk by ~2x via endothelial damage, and hyperlipidemia promotes atherosclerosis. MRI showing small vessel disease confirms etiology. No family history rules out genetic forms like CADASIL (NOTCH3 mutations, ~1% of VaD). Differential includes AD (amyloid pathology) and vasculitis (inflammatory markers). Prevalence of multi-infarct VaD is ~10% of dementias. Prevention through risk factor control (e.g., statins, smoking cessation) reduces incidence by ~30%.",
-      "❌ **Why not others**: NOTCH3 mutations (A) cause CADASIL, rare and familial. Amyloid-beta (C) is for AD, not VaD. Traumatic brain injury (D) requires trauma history. Vasculitis (E) is autoimmune, requiring inflammatory evidence.",
-    ],
-  },
-  {
-    id: "VD-1006",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 69-year-old retired mechanic with a history of hypertension, smoking, and atrial fibrillation presents with a 2-year history of stepwise cognitive decline, including difficulty with problem-solving and recent worsening after a transient ischemic attack (TIA). He has mild right-sided weakness and an MMSE score of 20/30, with deficits in executive function and attention. Brain MRI shows multiple cortical infarcts. Which SINGLE clinical feature is most characteristic of this patient’s vascular dementia?",
+    id: "VaD-SX-30002",
+    topic: "Geriatrics • Vascular dementia — Clinical Presentation (Symptoms)",
+    difficulty: "Medium",
+    vignetteTitle:
+      "Spot the vascular pattern: executive slowing with stepwise dips",
+    stem: "A 79-year-old man with long-standing hypertension, type 2 diabetes, and atrial fibrillation presents with 18 months of cognitive decline. Family reports a 'good day/bad day' pattern with two clear step-downs after TIAs. He mismanages bills and meds, gets stuck switching tasks, and walks more slowly with short steps. He laughs/cry easily (embarrassed afterward) and has new urinary urgency. Memory for recent events is fair with cues, but he is slow and distractible on testing. Which clinical constellation best identifies the underlying syndrome?",
     options: [
       {
         key: "A",
-        text: "Gradual memory loss with preserved executive function",
+        text: "Gradual, memory-first decline with poor cueing benefit; hippocampal-predominant pattern",
       },
       {
         key: "B",
-        text: "Stepwise cognitive decline with focal neurological signs and vascular risk factors",
-      }, // correct
-      { key: "C", text: "Prominent visual hallucinations and parkinsonism" },
-      { key: "D", text: "Early language deficits with fluent speech" },
-      { key: "E", text: "Severe apathy and social disinhibition" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Vascular dementia (VaD) is defined by stepwise cognitive decline tied to cerebrovascular events, such as strokes or TIAs, often accompanied by vascular risk factors (e.g., hypertension, smoking, atrial fibrillation) and focal neurological deficits (e.g., hemiparesis). This reflects ischemic damage to cortical or subcortical regions, impairing executive function and attention more than memory early on, distinguishing VaD from Alzheimer’s disease (AD).",
-      "🧠 **Clinical considerations**: The MMSE score of 20/30 indicates moderate VaD, with cortical infarcts on MRI confirming cerebrovascular pathology. The Hachinski Ischemic Score (>7) supports VaD over AD. Atrial fibrillation increases stroke risk by ~5x, and smoking doubles VaD risk. Differential diagnoses include AD (gradual memory loss, amyloid pathology), Lewy body dementia (hallucinations, parkinsonism), and frontotemporal dementia (FTD, behavioral changes). Prevalence of VaD is ~15-20% of dementia cases, often mixed with AD in ~30% of patients. Management focuses on vascular risk control (e.g., anticoagulation, antihypertensives) and physical therapy for weakness. Caregiver education is vital, as ~50% report stress in VaD.",
-      "❌ **Why not others**: Gradual memory loss (A) is characteristic of AD, not VaD’s stepwise pattern. Visual hallucinations and parkinsonism (C) suggest Lewy body dementia. Language deficits with fluent speech (D) indicate semantic primary progressive aphasia, not VaD. Severe apathy and disinhibition (E) are typical of FTD, not VaD.",
-    ],
-  },
-  {
-    id: "VD-1007",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 76-year-old woman with vascular dementia, hypertension, and a history of stroke presents with worsening executive dysfunction, apathy, and gait difficulties. She requires assistance with complex tasks like managing medications but can perform basic ADLs. Her MMSE score is 19/30. Brain MRI shows white matter hyperintensities and a prior lacunar infarct. She is on aspirin, lisinopril, and atorvastatin. Which SINGLE management strategy is most appropriate to address her moderate vascular dementia and gait impairment?",
-    options: [
-      { key: "A", text: "Initiate donepezil to improve executive function" },
+        text: "Fluctuations with recurrent visual hallucinations and spontaneous parkinsonism",
+      },
       {
-        key: "B",
-        text: "Optimize vascular risk factor control and refer to physical therapy for gait training",
-      }, // correct
-      { key: "C", text: "Start memantine to address apathy" },
+        key: "C",
+        text: "Early behavioral disinhibition, apathy, hyperorality with relatively spared episodic memory",
+      },
       {
         key: "D",
-        text: "Prescribe a low-dose benzodiazepine for gait instability",
+        text: "Stepwise or fluctuating decline with psychomotor slowing, executive dysfunction, gait disturbance, pseudobulbar affect, and early urinary urgency",
       },
-      { key: "E", text: "Recommend immediate institutionalization for safety" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Moderate vascular dementia (VaD, MMSE 10-20) management centers on preventing further cerebrovascular events through aggressive control of vascular risk factors (e.g., hypertension, hyperlipidemia) and addressing functional impairments like gait difficulties. Physical therapy improves mobility and reduces fall risk, a key concern in VaD due to subcortical white matter damage.",
-      "🧠 **Management considerations**: The MMSE score of 19/30 and MRI findings (white matter hyperintensities, lacunar infarct) confirm moderate VaD. Hypertension control (<130/80 mmHg) reduces stroke risk by ~30%, and statins lower recurrence risk by ~25%. Gait impairment, affecting ~40% of VaD patients, benefits from physical therapy, with ~60% showing improved mobility. Differential diagnoses include normal pressure hydrocephalus (NPH, with urinary incontinence) and Parkinson’s disease (tremor, rigidity), ruled out by history and imaging. Cholinesterase inhibitors like donepezil have modest benefits in mixed VaD/AD (~50% of cases). Caregiver support is critical, as ~50% experience burnout. Monitoring with MMSE every 6-12 months tracks progression.",
-      "❌ **Why not others**: Donepezil (A) is primarily for AD; evidence in pure VaD is limited. Memantine (C) is for moderate-severe AD, not first-line for VaD apathy. Benzodiazepines (D) increase fall risk and confusion, contraindicated in VaD. Institutionalization (E) is premature for patients with preserved basic ADLs; safety aids (e.g., walkers) suffice.",
-    ],
-  },
-  {
-    id: "VD-1008",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Emergency Department Vignette",
-    stem: "A 71-year-old man with vascular dementia, diabetes, and a history of multiple strokes presents to the emergency department with sudden worsening of confusion, slurred speech, and a new left-sided facial droop. His MMSE score is 14/30, down from 18/30 three months ago. Brain CT shows a new acute ischemic stroke in the right frontal lobe. He is on clopidogrel and metformin. Which SINGLE complication of this patient’s vascular dementia requires immediate management?",
-    options: [
-      { key: "A", text: "Aspiration pneumonia due to swallowing dysfunction" },
-      {
-        key: "B",
-        text: "Acute ischemic stroke causing new neurological deficits",
-      }, // correct
-      { key: "C", text: "Seizures secondary to cortical infarcts" },
-      { key: "D", text: "Urinary tract infection from incontinence" },
-      { key: "E", text: "Delirium from medication side effects" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Acute ischemic stroke is a critical complication in vascular dementia (VaD), causing sudden neurological deterioration (e.g., facial droop, slurred speech) due to new infarcts disrupting brain function. It affects ~30% of VaD patients annually and requires urgent imaging (CT/MRI) and management (e.g., thrombolysis if within 4.5 hours) to limit damage and prevent recurrence.",
-      "🧠 **Complication considerations**: The MMSE drop to 14/30 and new right frontal infarct confirm acute stroke in moderate VaD. Diabetes and prior strokes increase recurrence risk by ~3x. Clopidogrel reduces secondary stroke risk by ~20%. Differential diagnoses include seizures (~10% post-stroke risk, requiring EEG if suspected) and delirium (acute, reversible), ruled out by focal findings and CT evidence. Post-stroke rehabilitation (e.g., speech therapy) is essential, with ~40% of patients regaining partial function. Palliative care may be considered for recurrent strokes. Caregiver burden, affecting ~50% in VaD, requires support services.",
-      "❌ **Why not others**: Aspiration pneumonia (A) is more common in severe AD, not VaD, without swallowing issues here. Seizures (C) are possible but not primary without convulsive symptoms. Urinary tract infections (D) require incontinence symptoms, not reported. Delirium (E) is less likely with clear stroke findings on CT.",
-    ],
-  },
-  {
-    id: "VD-1009",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Easy",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 74-year-old woman with a history of hypertension and hyperlipidemia presents with a 1-year history of difficulty with organization, slowed thinking, and occasional urinary incontinence. Her MMSE score is 23/30, with deficits in executive function. Blood tests (thyroid, B12, folate) are normal. Which SINGLE investigation is most appropriate to confirm the diagnosis of vascular dementia in this patient?",
-    options: [
-      { key: "A", text: "Amyloid PET scan to detect amyloid-beta plaques" },
-      {
-        key: "B",
-        text: "Brain MRI to evaluate for infarcts and white matter hyperintensities",
-      }, // correct
-      { key: "C", text: "Lumbar puncture for CSF tau levels" },
-      { key: "D", text: "EEG to assess for subclinical seizures" },
       {
         key: "E",
-        text: "Dopamine transporter scan (DaTscan) for nigrostriatal degeneration",
+        text: "Triad of magnetic gait, urinary incontinence, cognitive slowing with ventriculomegaly",
       },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Diagnosing vascular dementia (VaD) requires imaging evidence of cerebrovascular disease, such as infarcts or white matter hyperintensities on brain MRI, which has >90% sensitivity for detecting vascular pathology underlying cognitive impairment. This confirms VaD in patients with vascular risk factors and executive dysfunction.",
-      "🧠 **Investigation considerations**: The MMSE score of 23/30 and executive deficits suggest mild VaD. Hypertension and hyperlipidemia increase VaD risk by ~2x each. MRI is the gold standard, with Hachinski Ischemic Score (>7) supporting VaD over AD. Differential diagnoses include AD (amyloid pathology), normal pressure hydrocephalus (NPH, gait/incontinence triad), and Lewy body dementia (hallucinations). Carotid ultrasound may follow to assess stenosis (~10% of VaD cases). Prevalence of VaD is ~15-20% of dementias, often mixed with AD in ~30% of cases. Management includes vascular risk control (e.g., antihypertensives, statins) to slow progression.",
-      "❌ **Why not others**: Amyloid PET (A) is for AD, not VaD. CSF tau levels (C) are for AD diagnosis, not vascular pathology. EEG (D) is for seizures, not indicated without seizure history. DaTscan (E) is for Lewy body dementia or Parkinson’s, not VaD.",
-    ],
-  },
-  {
-    id: "VD-1010",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 77-year-old man with a 5-year history of vascular dementia presents with worsening cognitive impairment and gait instability. He has a history of smoking, diabetes, and a prior stroke. His MMSE score is 16/30, with deficits in executive function and attention. Brain MRI shows extensive white matter hyperintensities and old infarcts. He has no family history of dementia. Which SINGLE etiological factor is most likely contributing to this patient’s vascular dementia?",
-    options: [
-      {
-        key: "A",
-        text: "Genetic mutations in the NOTCH3 gene causing CADASIL",
-      },
-      {
-        key: "B",
-        text: "Chronic small vessel disease from vascular risk factors like smoking and diabetes",
-      }, // correct
-      { key: "C", text: "Amyloid-beta and tau pathology in the hippocampus" },
-      {
-        key: "D",
-        text: "Chronic heavy metal exposure causing neuronal toxicity",
-      },
-      { key: "E", text: "Autoimmune-mediated cortical inflammation" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Vascular dementia (VaD) is primarily driven by chronic small vessel disease from modifiable vascular risk factors, such as smoking and diabetes, leading to ischemia, white matter damage, and cognitive impairment. This disrupts subcortical networks, impairing executive function and gait, unlike AD’s amyloid-driven pathology.",
-      "🧬 **Etiology considerations**: Smoking (2x risk) and diabetes (1.5-2x risk) promote small vessel disease, confirmed by MRI white matter hyperintensities and old infarcts. The MMSE score of 16/30 indicates moderate VaD. No family history rules out rare genetic forms like CADASIL (NOTCH3 mutations, ~1% of VaD). Differential includes AD (hippocampal atrophy, amyloid PET positive) and autoimmune encephalitis (inflammatory markers), both unlikely here. Prevalence of small vessel VaD is ~50% of VaD cases. Management with statins, glycemic control, and smoking cessation reduces progression risk by ~30%. Physical therapy addresses gait issues, affecting ~40% of VaD patients.",
-      "❌ **Why not others**: NOTCH3 mutations (A) cause CADASIL, a rare familial condition, not supported by history. Amyloid/tau pathology (C) is for AD, not VaD. Heavy metal exposure (D) lacks evidence as a primary VaD cause. Autoimmune inflammation (E) requires systemic symptoms, not present here.",
-    ],
-  },
-  {
-    id: "VD-1011",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Stepwise Decline After Stroke",
-    stem: "A 74-year-old woman presents with sudden-onset cognitive decline following a left MCA ischemic stroke 1 year ago. Her family reports abrupt worsening of memory and language after the event, followed by periods of stability and then further sudden drops after additional TIAs. MMSE is 18/30 with impaired naming and executive function. MRI brain reveals multiple cortical infarcts. Which SINGLE feature best distinguishes vascular dementia from Alzheimer’s dementia in this patient?",
-    options: [
-      {
-        key: "A",
-        text: "Gradual progressive memory loss with prominent hippocampal atrophy",
-      },
-      {
-        key: "B",
-        text: "Stepwise cognitive decline with focal neurological deficits",
-      },
-      {
-        key: "C",
-        text: "Early visuospatial disorientation and hallucinations",
-      },
-      {
-        key: "D",
-        text: "Parkinsonian motor features and fluctuating cognition",
-      },
-      { key: "E", text: "Episodic memory loss without vascular risk factors" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Vascular dementia (VaD) is a consequence of brain ischemia — damage from strokes (large or small) or chronic vascular injury. Unlike Alzheimer’s, where memory loss is gradual and hippocampal-driven, VaD often progresses in a ‘stair-step’ pattern: periods of sudden decline after an infarct, then plateaus, then further sudden drops.",
-      "🧠 **Why correct**: This patient had a left MCA stroke with abrupt loss of language and cognition, followed by TIAs that worsened function further. This ‘stepwise deterioration’ combined with focal deficits (aphasia, hemiparesis, visual field loss, etc.) is the most telling clue toward vascular dementia.",
-      "📸 **Imaging correlation**: MRI showing multiple cortical infarcts supports multi-infarct dementia. These infarcts disrupt cortical and subcortical networks needed for memory, executive function, and speech.",
-      "❌ **Why not others**: (A) Gradual decline with hippocampal atrophy is Alzheimer’s. (C) Visual hallucinations and disorientation = Lewy body dementia. (D) Parkinsonism with fluctuating cognition = Parkinson’s disease dementia or Lewy body dementia. (E) Pure episodic memory loss without risk factors = Alzheimer’s. None fit the sudden-onset, stepwise course here.",
-      "💡 **Exam pearl**: If you see ‘stepwise decline’ + vascular risk factors + stroke/TIA history → think vascular dementia. In contrast, Alzheimer’s = insidious onset, no focal neuro deficits early.",
-    ],
-  },
-  {
-    id: "VD-1012",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Hard",
-    vignetteTitle: "Subcortical Small Vessel Disease",
-    stem: "An 80-year-old man with hypertension, hyperlipidemia, and atrial fibrillation presents with cognitive slowing, difficulty with planning, and unsteady gait. His MMSE is 20/30, with impaired executive function but relatively preserved episodic memory. MRI brain demonstrates diffuse periventricular white matter hyperintensities and lacunar infarcts in the basal ganglia. Which SINGLE cognitive pattern is most typical of small vessel vascular dementia?",
-    options: [
-      {
-        key: "A",
-        text: "Early episodic memory loss with hippocampal involvement",
-      },
-      {
-        key: "B",
-        text: "Executive dysfunction, slowed processing, and gait disturbance",
-      },
-      {
-        key: "C",
-        text: "Prominent hallucinations and REM sleep behavior disorder",
-      },
-      { key: "D", text: "Aphasia, apraxia, and agnosia as primary deficits" },
-      { key: "E", text: "Behavioral disinhibition and personality change" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **Pathophysiology**: Small vessel disease damages the subcortical white matter tracts that connect the frontal lobes with deeper brain structures. When these pathways are disrupted, you get slowed processing (bradyphrenia), poor planning, impaired attention, mood changes, and gait/balance problems. Episodic memory can remain relatively intact in early stages because the hippocampus is spared.",
-      "🧠 **Why correct**: The clinical picture — executive dysfunction, cognitive slowing, and gait disturbance — combined with MRI white matter hyperintensities + lacunar infarcts = classic ‘subcortical vascular dementia.’ This form is extremely common in patients with hypertension and diabetes.",
-      "📸 **Imaging correlation**: Periventricular white matter hyperintensities (aka leukoaraiosis) are a radiological hallmark of chronic ischemic injury. Lacunar infarcts in basal ganglia and thalamus further impair subcortical circuits.",
-      "❌ **Why not others**: (A) Hippocampal episodic memory loss = Alzheimer’s. (C) Hallucinations/REM disturbance = Lewy body dementia. (D) Aphasia/apraxia/agnosia = cortical dementias like Alzheimer’s or frontotemporal dementia. (E) Behavioral disinhibition = frontotemporal dementia.",
-      "💡 **Clinical pearl**: When you see a patient with slow thinking, shuffling gait, mood changes, and vascular risk factors + diffuse white matter disease → think small vessel VaD. Some call this the ‘subcortical dementia syndrome.’",
-    ],
-  },
-  {
-    id: "VD-1013",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Binswanger’s Disease",
-    stem: "A 72-year-old woman with long-standing poorly controlled hypertension presents with progressive forgetfulness, urinary urgency, and frequent falls. Family describes emotional lability and slowed responses. MRI shows diffuse subcortical white matter lesions. Which SINGLE diagnosis best explains her presentation?",
-    options: [
-      { key: "A", text: "Binswanger’s subcortical leukoencephalopathy" },
-      { key: "B", text: "Alzheimer’s disease" },
-      { key: "C", text: "Normal pressure hydrocephalus" },
-      { key: "D", text: "Parkinson’s disease dementia" },
-      { key: "E", text: "Frontotemporal dementia" },
-    ],
-    correct: "A",
-    explanation_detail: [
-      "🌟 **Binswanger’s disease**: A specific form of vascular dementia caused by hypertensive small vessel disease leading to diffuse demyelination of the deep white matter. Think of it as a severe, diffuse version of small vessel VaD.",
-      "🧠 **Clinical triad**: (1) Cognitive decline with executive dysfunction, (2) gait disturbance with falls, (3) urinary incontinence. Emotional changes like pseudobulbar affect (involuntary laughing/crying) are common.",
-      "📸 **Imaging correlation**: MRI shows diffuse subcortical white matter changes — a striking appearance often called leukoaraiosis. No hippocampal atrophy is seen, which distinguishes it from Alzheimer’s.",
-      "❌ **Why not others**: (B) Alzheimer’s → memory-first, no urinary incontinence early. (C) NPH also has gait + urinary + cognitive triad but shows ventriculomegaly, not diffuse white matter disease. (D) Parkinson’s dementia requires prior parkinsonism. (E) FTD = personality/behavioral changes, not incontinence/falls.",
-      "💡 **Exam pearl**: If you see the triad ‘gait + incontinence + dementia’ → always think of two possibilities: (1) Normal pressure hydrocephalus (ventriculomegaly) or (2) Binswanger’s disease (diffuse white matter damage). MRI distinguishes them.",
-    ],
-  },
-  {
-    id: "VD-1014",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Hard",
-    vignetteTitle: "Strategic Infarct Dementia",
-    stem: "A 70-year-old man develops acute memory and language impairment following a left thalamic stroke. His cognition declined abruptly after this single vascular event. He has hypertension and atrial fibrillation. Which SINGLE mechanism best explains his vascular dementia?",
-    options: [
-      { key: "A", text: "Chronic hypoperfusion due to microangiopathy" },
-      { key: "B", text: "Accumulation of amyloid plaques in temporal lobes" },
-      {
-        key: "C",
-        text: "Disruption of critical cognitive networks from a single strategic infarct",
-      },
-      { key: "D", text: "Autoimmune-mediated neuronal inflammation" },
-      { key: "E", text: "Cholinergic neuron degeneration in nucleus basalis" },
-    ],
-    correct: "C",
-    explanation_detail: [
-      "🌟 **Strategic infarct dementia**: Unlike diffuse small vessel disease, here a single infarct in a key brain region (like the thalamus, hippocampus, angular gyrus, or caudate) can cripple major cognitive networks and produce dementia. Think of it as ‘one well-placed bullet’ rather than ‘many tiny shrapnel wounds.’",
-      "🧠 **Why correct**: This patient had a thalamic stroke followed by sudden cognitive decline — a classic example. The thalamus is a relay station; damage here disrupts widespread cortical–subcortical communication, leading to immediate cognitive impairment.",
-      "❌ **Why not others**: (A) Microangiopathy = chronic small vessel VaD, but not the case here. (B) Amyloid = Alzheimer’s disease. (D) Autoimmune inflammation = autoimmune encephalitis. (E) Cholinergic neuron degeneration = Alzheimer’s, not vascular.",
-      "💡 **Clinical pearl**: Sudden dementia after a single stroke in a ‘strategic’ location = Strategic infarct dementia. MRI/CT will show one focal lesion, not diffuse white matter disease.",
-    ],
-  },
-  {
-    id: "VD-1015",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Mixed Dementia Trap",
-    stem: "A 76-year-old woman with hypertension and diabetes presents with progressive memory loss. She has both executive dysfunction and significant episodic memory impairment. MRI shows global atrophy, white matter changes, and hippocampal volume loss. Which SINGLE diagnosis best explains her presentation?",
-    options: [
-      { key: "A", text: "Pure Alzheimer’s disease" },
-      { key: "B", text: "Mixed dementia (Alzheimer’s + vascular pathology)" },
-      { key: "C", text: "Pure vascular dementia from small vessel disease" },
-      { key: "D", text: "Frontotemporal dementia" },
-      { key: "E", text: "Lewy body dementia" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **Mixed dementia**: Up to 40% of dementia cases in older adults are ‘mixed,’ with both Alzheimer’s pathology (amyloid + tau, hippocampal atrophy) and vascular changes (white matter lesions, infarcts). Risk factors like hypertension and diabetes accelerate both processes.",
-      "🧠 **Why correct**: This patient has signs of both diseases: (1) Episodic memory impairment + hippocampal atrophy → Alzheimer’s; (2) Executive dysfunction + vascular risk factors + white matter changes → vascular dementia. Together, this = mixed dementia.",
-      "📸 **Imaging correlation**: Hippocampal atrophy (seen on coronal MRI) = Alzheimer’s; periventricular white matter lesions and infarcts = vascular dementia. The coexistence is key.",
-      "❌ **Why not others**: (A) Pure AD would lack vascular lesions. (C) Pure VaD usually spares early episodic memory. (D) FTD = personality/behavior change, not early memory + executive dysfunction. (E) Lewy body = hallucinations, REM disturbance, parkinsonism.",
-      "💡 **Clinical pearl**: If an elderly patient with vascular risk factors has BOTH prominent memory loss and executive dysfunction, always consider mixed dementia — it’s more common than exam writers admit.",
-    ],
-  },
-  {
-    id: "VD-1016",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Cognitive Decline with Silent Strokes",
-    stem: "A 79-year-old man with hypertension and chronic atrial fibrillation presents with progressive cognitive slowing, poor attention, and frequent minor falls. His MMSE is 21/30, showing executive dysfunction. He never had a clinically apparent stroke. MRI brain reveals multiple silent lacunar infarcts in the basal ganglia and thalamus. Which SINGLE mechanism best explains his vascular dementia?",
-    options: [
-      {
-        key: "A",
-        text: "Progressive amyloid deposition in medial temporal lobes",
-      },
-      {
-        key: "B",
-        text: "Multiple silent infarcts accumulating to impair networks",
-      },
-      { key: "C", text: "Frontotemporal lobar degeneration" },
-      { key: "D", text: "Lewy body accumulation in visual association cortex" },
-      { key: "E", text: "Chronic demyelination from autoimmune attack" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **Mechanism**: Vascular dementia can arise from multiple silent or ‘covert’ infarcts — strokes that don’t cause obvious acute deficits but, over time, damage key subcortical circuits. This is called ‘multi-infarct dementia.’",
-      "🧠 **Why correct**: The patient never had a clinical stroke, but MRI shows accumulated silent lacunes. These disrupt attention, executive functioning, and motor pathways, leading to dementia + gait instability.",
-      "📸 **Imaging pearl**: Lacunar infarcts are small (<15 mm) deep infarcts in basal ganglia, thalamus, or internal capsule. Multiple lacunes = strong predictor of cognitive decline.",
-      "❌ **Why not others**: (A) = Alzheimer’s. (C) = FTD (behavioral change). (D) = Lewy body dementia (hallucinations). (E) = autoimmune encephalitis/MS, not suggested here.",
-      "💡 **Clinical pearl**: Always think vascular dementia even if there’s no overt stroke history. Silent infarcts can ‘chip away’ cognition over years.",
-    ],
-  },
-  {
-    id: "VD-1017",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Hard",
-    vignetteTitle: "The CT vs MRI Trap",
-    stem: "A 75-year-old woman with diabetes and hypertension presents with memory complaints. CT head is reported as ‘age-related changes, no acute findings.’ Her MMSE is 19/30 with executive dysfunction. Family reports she is slow in daily activities and struggles with planning. An MRI is ordered, revealing periventricular white matter hyperintensities and multiple lacunar infarcts. Which SINGLE investigation is the most sensitive for diagnosing vascular dementia?",
-    options: [
-      { key: "A", text: "EEG" },
-      { key: "B", text: "CT brain" },
-      { key: "C", text: "MRI brain with FLAIR sequences" },
-      { key: "D", text: "FDG-PET brain" },
-      { key: "E", text: "CSF amyloid and tau levels" },
-    ],
-    correct: "C",
-    explanation_detail: [
-      "🌟 **Core diagnostic point**: CT is widely available but often misses small vessel disease and subtle ischemic injury. MRI, especially with FLAIR sequences, is far more sensitive in detecting white matter hyperintensities and lacunar infarcts.",
-      "🧠 **Why correct**: The patient’s CT was ‘normal,’ but MRI uncovered the vascular burden. MRI remains the gold standard for VaD imaging, detecting silent infarcts, strategic infarcts, and diffuse small vessel disease.",
-      "❌ **Why not others**: (A) EEG = nonspecific slowing in dementia. (B) CT can show infarcts/atrophy but is less sensitive. (D) FDG-PET helps in Alzheimer’s vs FTD, not vascular dementia. (E) CSF amyloid/tau = Alzheimer’s biomarkers.",
-      "💡 **Clinical pearl**: If CT is ‘normal’ but suspicion for vascular dementia remains → always escalate to MRI. This is a common OSCE trap.",
-    ],
-  },
-  {
-    id: "VD-1018",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Cognitive Decline vs Delirium",
-    stem: "An 82-year-old man with hypertension and peripheral vascular disease is admitted for pneumonia. During hospitalization, he is acutely confused, disoriented, and agitated. His baseline includes executive dysfunction and mild memory loss, with MRI showing white matter changes. Which SINGLE statement best differentiates vascular dementia from delirium in this case?",
-    options: [
-      {
-        key: "A",
-        text: "Vascular dementia presents with acute fluctuating cognition",
-      },
-      { key: "B", text: "Delirium has acute onset and fluctuating attention" },
-      {
-        key: "C",
-        text: "Dementia symptoms always improve after infection resolves",
-      },
-      { key: "D", text: "Vascular dementia never coexists with delirium" },
-      { key: "E", text: "Delirium primarily impairs episodic memory only" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **Key distinction**: Dementia = chronic, progressive cognitive decline. Delirium = acute, fluctuating disturbance in attention and awareness, usually triggered by illness, drugs, or metabolic derangement.",
-      "🧠 **Why correct**: This patient has baseline vascular dementia but developed superimposed delirium due to pneumonia. Fluctuating confusion + acute onset = delirium hallmark.",
-      "❌ **Why not others**: (A) Acute fluctuations = delirium, not VaD. (C) Dementia does not ‘resolve.’ (D) Delirium can occur *on top of* dementia — common in older patients. (E) Delirium = global attention impairment, not just episodic memory.",
-      "💡 **Clinical pearl**: Always assess for delirium in hospitalized elderly patients with dementia. It’s reversible if you treat the underlying trigger — missing this is a common exam pitfall.",
-    ],
-  },
-  {
-    id: "VD-1019",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Hard",
-    vignetteTitle: "Vascular Risk Factor Control",
-    stem: "A 73-year-old woman with vascular dementia is reviewed in clinic. She has hypertension, type 2 diabetes, and a 40-pack-year smoking history. Her MMSE is 17/30. She is on no secondary prevention therapy. Which SINGLE intervention has the strongest evidence for slowing progression of vascular dementia?",
-    options: [
-      { key: "A", text: "Cholinesterase inhibitors (donepezil)" },
-      {
-        key: "B",
-        text: "Tight control of vascular risk factors (BP, diabetes, smoking cessation)",
-      },
-      { key: "C", text: "Antipsychotic therapy for agitation" },
-      { key: "D", text: "Omega-3 fatty acid supplementation" },
-      { key: "E", text: "Cognitive rehabilitation therapy alone" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **Core principle**: The best way to slow vascular dementia is to stop further vascular injury. This means aggressive management of modifiable risk factors: blood pressure control, glycemic control, lipid lowering, antiplatelets/anticoagulation if indicated, and smoking cessation.",
-      "🧠 **Why correct**: Donepezil and other cholinesterase inhibitors have *limited* efficacy in VaD (though sometimes used off-label). Risk factor control has strong evidence in reducing future infarcts, thus slowing progression.",
-      "❌ **Why not others**: (A) Donepezil = modest benefit in AD > VaD. (C) Antipsychotics = only for severe behavioral symptoms, increase mortality. (D) Omega-3 = weak evidence. (E) Cognitive rehab helps function but doesn’t modify disease biology.",
-      "💡 **Clinical pearl**: In VaD, drugs are secondary; lifestyle and vascular control are first line. The exam loves to test this difference from Alzheimer’s.",
-    ],
-  },
-  {
-    id: "VD-1020",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "The OSCE Gait Clue",
-    stem: "A 78-year-old man is being assessed in clinic for cognitive decline. He has executive dysfunction, bradyphrenia (slowed responses), and difficulty managing daily tasks. On exam, he has a wide-based shuffling gait. MRI brain shows diffuse periventricular white matter disease. Which SINGLE dementia subtype is most likely?",
-    options: [
-      { key: "A", text: "Alzheimer’s disease" },
-      { key: "B", text: "Lewy body dementia" },
-      { key: "C", text: "Frontotemporal dementia" },
-      {
-        key: "D",
-        text: "Subcortical vascular dementia (small vessel disease)",
-      },
-      { key: "E", text: "Normal pressure hydrocephalus" },
     ],
     correct: "D",
     explanation_detail: [
-      "🌟 **Clinical clue**: Gait disturbance + executive dysfunction + slowed processing = the ‘subcortical dementia syndrome,’ classic for small vessel vascular dementia. MRI showing white matter disease clinches it.",
-      "🧠 **Why correct**: Subcortical VaD arises from ischemic injury to white matter tracts connecting frontal lobes with basal ganglia/thalamus. This produces cognitive slowing, poor planning, mood changes, and gait disturbance.",
-      "❌ **Why not others**: (A) AD = memory first, gait late. (B) Lewy body = hallucinations, REM sleep disorder, parkinsonism. (C) FTD = disinhibition, apathy, language changes. (E) NPH also has gait + incontinence + dementia, but MRI would show ventriculomegaly, not diffuse white matter lesions.",
-      "💡 **OSCE pearl**: If the examiner describes dementia + gait disturbance early → think vascular dementia or NPH. MRI is your tie-breaker: ventriculomegaly = NPH; white matter hyperintensities = VaD.",
+      "**1️⃣ Why it is the correct answer**",
+      "- **Vascular dementia (VaD)** classically presents with **executive dysfunction** and **psychomotor slowing** rather than pure amnesia.",
+      "- **Temporal link** to vascular events: **stepwise dips** after TIA/stroke or fluctuating course with small-vessel disease.",
+      "- **Gait disturbance** (short steps, lower-body parkinsonism), **pseudobulbar affect** (emotional lability), and **early urinary urgency** reflect **fronto–subcortical disconnection**.",
+      "- **Memory may improve with cues** (retrieval problem) versus the storage failure of Alzheimer’s.",
+      "- [yellow]Pattern lock:[/yellow] vascular risks + stepwise course + executive/gait/affect/urinary features → **VaD**. 🧠🩸",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A (Alzheimer’s):** Memory-first with **poor cueing** and hippocampal atrophy; lacks stepwise vascular signature.",
+      "- **B (DLB):** **Visual hallucinations**, pronounced **fluctuations**, and **parkinsonism** without clear vascular temporality.",
+      "- **C (bvFTD):** Early **behavioral**/personality change with relative memory sparing and frontal atrophy; not vascular stepwise.",
+      "- **E (NPH):** Gait + urinary + cognitive slowing fit, but NPH requires **ventriculomegaly** and often magnetic gait; stepwise TIAs are not typical.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** MoCA with **attention/executive** focus (trail-making, clock, abstraction) + neuro exam for **focal signs**. **Confirms?** ❌ Suggests VaD profile.",
+      "- **Next Diagnostic step:** 🧠 **MRI brain** → [blue]lacunes, cortical/subcortical infarcts, confluent periventricular WMH, microbleeds[/blue] matching deficits/timeline. **Confirms?** ➕ Supports.",
+      "- **Best Diagnostic Step:** **Establish causality**: correlate **clinical timeline** (post-stroke/stepwise) + **lesion location/burden**; consider **CSF AD biomarkers/amyloid PET** if mixed AD/VaD suspected. **Confirms?** ✅ Clinico-radiologic VaD (or mixed).",
+      "- **Adjuncts:** Vascular workup (ECG for AF, carotid US/CTA/MRA, echocardiography), lipids/A1c, ambulatory BP, sleep apnea screen.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Aggressive vascular risk control[/green] — BP per guideline, statin for ASCVD risk, DM optimization, smoking cessation, exercise, Mediterranean-style diet.",
+      "- **First Line:** [green]Antiplatelet therapy[/green] for non-cardioembolic disease; **anticoagulation** for AF when indicated; PT/OT for **gait**; **cognitive rehab** emphasizing external aids and task sequencing; manage mood/apathy and **pseudobulbar affect** (e.g., dextromethorphan–quinidine where appropriate).",
+      "- **Gold Standard:** No cure; [green]prevent further vascular hits[/green]. Consider **cholinesterase inhibitor/memantine** for symptomatic benefit in selected VaD or **mixed AD/VaD** (modest effect). [red]Avoid hypotension and over-sedation[/red].",
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- **Small-vessel disease** (arteriolosclerosis, lipohyalinosis) and **infarcts/hemorrhages** disrupt **fronto–subcortical circuits**, degrading processing speed, attention, and executive control.",
+      "- **White-matter hyperintensities** disconnect cortical hubs; **microbleeds** signal cerebral amyloid angiopathy or hypertensive small-vessel pathology.",
+      "- Repeated vascular hits accumulate **cognitive debt**; mixed pathology common, where vascular injury unmasks/worsens underlying AD.",
+      "- [blue]Network view:[/blue] damage to thalamus, caudate, frontal WM tracts → executive/gait/affect/urinary syndrome.",
+      "**6️⃣ Symptoms — Clinical Presentation map**",
+      "- **Psychomotor slowing & executive dysfunction** 🐢🧩 → fronto–subcortical disconnection.",
+      "- **Gait disturbance** 🚶‍♂️↘️ (short steps, wide base) → subcortical WM involvement (‘lower-body parkinsonism’).",
+      "- **Pseudobulbar affect** 😢😅 → corticobulbar tract involvement causing emotional lability.",
+      "- **Urinary urgency/early incontinence** 🚻 → descending control pathway disruption.",
+      "- **Stepwise or fluctuating decline** ⬇️➡️⬇️ → temporal link to TIAs/strokes/small-vessel burden.",
+      "- [purple]Pearl:[/purple] ==Cues help memory (retrieval) + executive/gait/affect/urinary + vascular timeline → **think VaD**==",
     ],
   },
   {
-    id: "VD-1021",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Hard",
-    vignetteTitle: "CADASIL – Genetic Small Vessel Dementia",
-    stem: "A 62-year-old man presents with progressive cognitive decline, migraine with aura since young adulthood, and recurrent small strokes. Family history reveals similar problems in his father. MRI shows extensive white matter hyperintensities, especially in the anterior temporal lobes. Which SINGLE underlying genetic abnormality is most likely responsible?",
-    options: [
-      { key: "A", text: "NOTCH3 gene mutation" },
-      { key: "B", text: "Presenilin-1 mutation" },
-      { key: "C", text: "Apolipoprotein E4 allele" },
-      { key: "D", text: "HTT trinucleotide repeat expansion" },
-      { key: "E", text: "MAPT mutation" },
-    ],
-    correct: "A",
-    explanation_detail: [
-      "🌟 **CADASIL (Cerebral Autosomal Dominant Arteriopathy with Subcortical Infarcts and Leukoencephalopathy)**: Rare but classic exam case. Caused by NOTCH3 mutations on chromosome 19, leading to smooth muscle dysfunction in small vessels → recurrent strokes + subcortical dementia.",
-      "🧠 **Clues**: Migraine with aura (often early), family history (autosomal dominant), recurrent small strokes, cognitive decline. MRI with anterior temporal lobe white matter lesions is pathognomonic.",
-      "❌ **Why not others**: (B) Presenilin = early-onset Alzheimer’s. (C) ApoE4 = risk factor for Alzheimer’s, not VaD. (D) HTT = Huntington’s disease. (E) MAPT = frontotemporal dementia.",
-      "💡 **Clinical pearl**: If you see young-onset dementia + migraines + strokes + strong family history = always think CADASIL.",
-    ],
-  },
-  {
-    id: "VD-1022",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "CARASIL – The Recessive Cousin",
-    stem: "A 59-year-old man presents with early cognitive decline, spastic paraparesis, and alopecia. He has no vascular risk factors. MRI shows diffuse white matter changes consistent with small vessel disease. His brother has a similar disorder. Which SINGLE genetic defect is most likely?",
-    options: [
-      { key: "A", text: "HTRA1 gene mutation" },
-      { key: "B", text: "NOTCH3 mutation" },
-      { key: "C", text: "ApoE4 allele" },
-      { key: "D", text: "C9orf72 repeat expansion" },
-      { key: "E", text: "Presenilin-2 mutation" },
-    ],
-    correct: "A",
-    explanation_detail: [
-      "🌟 **CARASIL (Cerebral Autosomal Recessive Arteriopathy with Subcortical Infarcts and Leukoencephalopathy)**: Ultra-rare. Caused by HTRA1 mutations. Unlike CADASIL, it is recessive and associated with alopecia and spondylosis.",
-      "🧠 **Clues**: No vascular risk factors, family history with recessive inheritance, systemic features (hair loss, spine problems) + white matter disease.",
-      "❌ **Why not others**: (B) NOTCH3 = CADASIL (dominant). (C) ApoE4 = Alzheimer’s risk. (D) C9orf72 = ALS/FTD. (E) Presenilin-2 = early Alzheimer’s.",
-      "💡 **Exam pearl**: If alopecia + dementia + spasticity + white matter disease in a recessive pattern → CARASIL.",
-    ],
-  },
-  {
-    id: "VD-1023",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Hard",
-    vignetteTitle: "Post-Intracerebral Hemorrhage Dementia",
-    stem: "A 76-year-old man had a large left basal ganglia intracerebral hemorrhage 2 years ago. Since then, his family notes progressive cognitive decline, personality change, and impaired executive function. MRI shows hemosiderin deposits and surrounding white matter gliosis. Which SINGLE mechanism most explains his dementia?",
+    id: "VaD-SIGNS-30003",
+    topic: "Geriatrics • Vascular dementia — Signs (Examination Findings)",
+    difficulty: "Medium",
+    vignetteTitle: "What bedside signs point to vascular dementia?",
+    stem: "An 80-year-old with long-standing hypertension, diabetes, and atrial fibrillation has stepwise cognitive decline after TIAs. On exam: slowed processing, impaired trail-making and set-shifting, reduced verbal fluency, positive grasp reflex, brisk reflexes with right-sided pronator drift, and short-stepped gait with early urinary urgency. Delayed recall improves with category cues. Which set of examination signs best fits the underlying syndrome?",
     options: [
       {
         key: "A",
-        text: "Direct cortical neuronal degeneration by amyloid-beta",
+        text: "Poor delayed recall with minimal cueing benefit; constructional apraxia; otherwise nonfocal exam",
       },
       {
         key: "B",
-        text: "Disruption of subcortical circuits due to hemorrhage and secondary gliosis",
-      },
-      { key: "C", text: "Autoimmune-mediated cortical inflammation" },
-      { key: "D", text: "Tau protein accumulation in frontal lobes" },
-      { key: "E", text: "Synuclein accumulation in substantia nigra" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **Mechanism**: Large intracerebral hemorrhage causes direct tissue destruction + disruption of white matter tracts. Over time, hemosiderin and gliosis lead to chronic subcortical disconnection → cognitive and executive dysfunction.",
-      "🧠 **Why correct**: Patient’s basal ganglia bleed directly damaged frontal-subcortical loops → classic vascular dementia picture.",
-      "❌ **Why not others**: (A) Amyloid = Alzheimer’s. (C) Autoimmune = limbic encephalitis. (D) Tau = Alzheimer’s/FTD. (E) Synuclein = Parkinson’s/Lewy body dementia.",
-      "💡 **Clinical pearl**: Dementia post-hemorrhage is vascular dementia, not Alzheimer’s. MRI will show hemosiderin (old bleed) + gliosis.",
-    ],
-  },
-  {
-    id: "VD-1024",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Prognosis Question",
-    stem: "A 79-year-old woman with vascular dementia secondary to small vessel disease asks about her prognosis. Which SINGLE statement best reflects the natural history of vascular dementia?",
-    options: [
-      {
-        key: "A",
-        text: "Vascular dementia always progresses linearly without fluctuation",
-      },
-      {
-        key: "B",
-        text: "Progression is often stepwise with sudden declines after strokes",
-      },
-      { key: "C", text: "Most patients improve spontaneously with time" },
-      { key: "D", text: "Progression is identical to Alzheimer’s disease" },
-      {
-        key: "E",
-        text: "Life expectancy is unaffected compared to healthy peers",
-      },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **Natural history**: VaD progression is usually ‘stepwise’ — sudden deterioration after strokes or TIAs, then periods of plateau. Contrast with Alzheimer’s → slow, steady, continuous decline.",
-      "🧠 **Prognosis**: Average survival after diagnosis is 5–7 years, similar to Alzheimer’s, but comorbid vascular disease increases cardiovascular mortality.",
-      "❌ **Why not others**: (A) Linear = Alzheimer’s, not VaD. (C) Dementia is irreversible. (D) AD and VaD differ: stepwise vs gradual. (E) Life expectancy is shortened due to both dementia and vascular comorbidities.",
-      "💡 **Clinical pearl**: In OSCE stations, if asked about prognosis → emphasize stepwise course and importance of preventing further strokes with vascular risk control.",
-    ],
-  },
-  {
-    id: "VD-1025",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Hard",
-    vignetteTitle: "Overlap with Alzheimer’s Pathology",
-    stem: "A 78-year-old woman has both executive dysfunction and severe episodic memory loss. MRI shows hippocampal atrophy, diffuse white matter disease, and multiple old lacunar infarcts. Which SINGLE term best describes her diagnosis?",
-    options: [
-      { key: "A", text: "Pure Alzheimer’s disease" },
-      { key: "B", text: "Pure vascular dementia" },
-      { key: "C", text: "Mixed dementia (Alzheimer’s and vascular)" },
-      { key: "D", text: "Frontotemporal dementia" },
-      { key: "E", text: "Lewy body dementia" },
-    ],
-    correct: "C",
-    explanation_detail: [
-      "🌟 **Mixed dementia**: Very common in older adults (>40%). Both Alzheimer’s pathology (amyloid, tau, hippocampal atrophy) and vascular damage (infarcts, white matter disease) coexist, accelerating decline.",
-      "🧠 **Why correct**: Patient has hippocampal atrophy (AD) + infarcts/white matter disease (VaD) → definition of mixed dementia.",
-      "❌ **Why not others**: (A) Pure AD = memory first, no infarcts. (B) Pure VaD = executive dysfunction, memory relatively spared early. (D) FTD = behavior/language changes, not memory + infarcts. (E) Lewy = hallucinations, REM disorder.",
-      "💡 **Clinical pearl**: Mixed dementia is often under-recognized. Always suspect it in elderly with vascular risk factors + strong memory impairment.",
-    ],
-  },
-  {
-    id: "VD-1026",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Secondary Prevention After Stroke",
-    stem: "A 74-year-old man with a history of TIA and vascular dementia is reviewed in clinic. He is hypertensive and smokes daily. He is not on any secondary prevention medications. Which SINGLE intervention is the most evidence-based first-line step to reduce further cognitive decline?",
-    options: [
-      { key: "A", text: "Start aspirin and optimize blood pressure control" },
-      { key: "B", text: "Start memantine for cognitive improvement" },
-      { key: "C", text: "Start SSRI for mood stabilization" },
-      { key: "D", text: "Begin vitamin E supplementation" },
-      { key: "E", text: "Arrange for cognitive behavioral therapy" },
-    ],
-    correct: "A",
-    explanation_detail: [
-      "🌟 **Management principle**: In vascular dementia, the most effective way to slow progression is preventing further vascular insults. This means aggressive vascular risk factor control + antiplatelet therapy if stroke/TIA history is present.",
-      "🧠 **Why correct**: Aspirin (or clopidogrel if intolerant) + tight BP control lowers risk of recurrent infarcts, thus slowing cognitive decline. Smoking cessation, statin therapy, and diabetes management are also essential.",
-      "❌ **Why not others**: (B) Memantine/cholinesterase inhibitors = limited evidence, not first-line in pure VaD. (C) SSRIs treat depression, not core dementia. (D) Vitamin E lacks benefit, may increase mortality. (E) CBT supportive, but not disease-modifying.",
-      "💡 **Exam pearl**: If asked about slowing progression of VaD → always pick ‘vascular risk factor optimization’ over cognitive enhancers.",
-    ],
-  },
-  {
-    id: "VD-1027",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Hard",
-    vignetteTitle: "Cholinesterase Inhibitors in VaD",
-    stem: "A 79-year-old woman with mixed dementia (vascular + Alzheimer’s) is trialed on donepezil. Her family reports some mild improvement in memory but no change in executive dysfunction or gait disturbance. Which SINGLE statement best explains this response?",
-    options: [
-      {
-        key: "A",
-        text: "Donepezil is primarily effective in subcortical small vessel dementia",
-      },
-      {
-        key: "B",
-        text: "Cholinesterase inhibitors target Alzheimer’s pathology, not vascular",
+        text: "Fluctuating attention with recurrent visual hallucinations and spontaneous parkinsonism",
       },
       {
         key: "C",
-        text: "Donepezil has strong evidence in preventing new infarcts",
+        text: "Nonfluent agrammatic speech with apraxia of speech; left inferior frontal signs",
       },
       {
         key: "D",
-        text: "Vascular dementia patients cannot respond to cognitive enhancers",
+        text: "Psychomotor slowing with executive dysfunction (set-shifting/attention), frontal release signs, focal UMN findings (hyperreflexia/pronator drift/Babinski), gait disturbance (short steps/lower-body parkinsonism), early urinary urgency; memory improves with cues",
       },
       {
         key: "E",
-        text: "Cholinesterase inhibitors are contraindicated in dementia",
+        text: "Magnetic gait with ventriculomegaly, urinary incontinence, and subcortical cognitive slowing without focal UMN signs",
       },
     ],
-    correct: "B",
+    correct: "D",
     explanation_detail: [
-      "🌟 **Drug role**: Cholinesterase inhibitors (donepezil, rivastigmine, galantamine) improve cognition in Alzheimer’s disease by enhancing acetylcholine in surviving neurons. Their benefit in pure VaD is minimal, but in mixed dementia (common in elderly), they may help memory deficits from the Alzheimer’s component.",
-      "🧠 **Why correct**: The patient improved in memory (Alzheimer’s feature) but not executive/gait (vascular feature). This matches the expected partial response.",
-      "❌ **Why not others**: (A) Subcortical VaD doesn’t respond. (C) Donepezil does not prevent infarcts. (D) Some mixed dementia patients improve. (E) They are not contraindicated; in fact, they are NICE-approved for AD and mixed dementia.",
-      "💡 **Clinical pearl**: Always consider mixed dementia if you see partial benefit from cholinesterase inhibitors.",
+      "**1️⃣ Why it is the correct answer**",
+      "- **Vascular dementia (VaD)** shows **executive dysfunction** (set-shifting, attention) and **psychomotor slowing** on bedside testing.",
+      "- **Frontal release signs** (e.g., grasp), **UMN findings** (hyperreflexia, pronator drift, Babinski), and **gait disturbance** (short steps, wide base, lower-body parkinsonism) reflect **fronto–subcortical disconnection**.",
+      "- **Urinary urgency** appears early in subcortical small-vessel disease.",
+      "- **Delayed recall improves with cues** → retrieval problem (subcortical) rather than the storage failure typical of Alzheimer’s.",
+      "- [yellow]Pattern lock:[/yellow] vascular risks + stepwise course + executive/gait/UMN/frontal-release + cueable memory → **VaD**. 🧠🩸",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A (Alzheimer’s signs):** **Poor cueing benefit** and nonfocal exam point to hippocampal storage failure, not VaD with focal/frontal signs.",
+      "- **B (DLB signs):** **Visual hallucinations**, cognitive **fluctuations**, and spontaneous **parkinsonism** without vascular temporality; UMN/frontal-release are not core.",
+      "- **C (nfvPPA signs):** Language-output (agrammatism/apraxia of speech) localizes to left IFG/insula; not the executive–gait–UMN cluster of VaD.",
+      "- **E (NPH signs):** Magnetic gait + ventriculomegaly + incontinence fit NPH but typically **lack focal UMN signs** and vascular stepwise link.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** MoCA focusing on **attention/executive** (trail-making, clock, abstraction) + full neuro exam for **UMN/frontal-release** signs. **Confirms?** ❌ Suggests VaD.",
+      "- **Next Diagnostic step:** 🧠 **MRI brain** → [blue]lacunes, cortical/subcortical infarcts, confluent periventricular WMH, microbleeds[/blue] matching deficits/timeline. **Confirms?** ➕ Supports VaD.",
+      "- **Best Diagnostic Step:** **Clinico-radiologic causality** (stepwise decline post-TIA/stroke or heavy small-vessel burden) ± **CSF AD biomarkers/amyloid PET** if mixed AD/VaD suspected. **Confirms?** ✅ VaD (or mixed).",
+      "- **Adjuncts:** Vascular workup (ECG/AF, carotid US/CTA/MRA, echocardiography), ambulatory BP, lipids/A1c, sleep apnea screen.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Aggressive vascular risk control[/green] — guideline BP, statin per ASCVD risk, diabetes optimization, smoking cessation, exercise, Mediterranean-style diet.",
+      "- **First Line:** [green]Antiplatelet therapy[/green] for non-cardioembolic disease; **anticoagulation** for AF if indicated; **PT/OT** for gait/balance; **cognitive rehab** with external aids; treat depression/apathy and **pseudobulbar affect** (e.g., dextromethorphan–quinidine when appropriate).",
+      "- **Gold Standard:** No cure; [green]prevent further vascular hits[/green]. Consider **cholinesterase inhibitor/memantine** for symptomatic benefit in selected VaD or **mixed AD/VaD** (modest effect). [red]Avoid hypotension/over-sedation[/red].",
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- **Small-vessel disease** (arteriolosclerosis/lipohyalinosis) and **infarcts** disconnect **fronto–subcortical circuits**, producing **slowing, executive dysfunction, gait disturbance, and UMN signs**.",
+      "- **White-matter hyperintensities** degrade network efficiency; **microbleeds** indicate hypertensive disease or CAA.",
+      "- Mixed pathology is common; vascular injury **reduces cognitive reserve** and **amplifies** coexisting Alzheimer changes.",
+      "- [blue]Network view:[/blue] thalamus–caudate–frontal WM tract damage → executive/affect/urinary phenotype.",
+      "**6️⃣ Signs — Examination Findings map**",
+      "- **Executive dysfunction & slowing** 🐢🧩 → impaired set-shifting/attention on MoCA (TMT-B, clock).",
+      "- **Frontal release signs** ✋ → grasp/snout from frontal disinhibition.",
+      "- **UMN findings** ⚡ → hyperreflexia, pronator drift, Babinski from corticospinal tract involvement.",
+      "- **Gait disturbance** 🚶‍♂️↘️ → short steps, wide base, lower-body parkinsonism from subcortical WM disease.",
+      "- **Urinary urgency** 🚻 → descending control pathway disruption.",
+      "- **Cueable memory** 🧩 → retrieval deficit (subcortical) vs storage deficit of AD.",
+      "- [purple]Pearl:[/purple] ==Executive slowing + frontal/UMN signs + vascular timeline → **think VaD**==",
     ],
   },
   {
-    id: "VD-1028",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Depression vs Dementia",
-    stem: "A 76-year-old man presents with poor concentration, low mood, and forgetfulness. His wife reports loss of interest and early morning wakening. On testing, he is slow but recalls details when prompted. MRI shows moderate white matter hyperintensities. Which SINGLE diagnosis best fits?",
-    options: [
-      { key: "A", text: "Pure vascular dementia" },
-      { key: "B", text: "Depression (‘pseudodementia’)" },
-      { key: "C", text: "Alzheimer’s disease" },
-      { key: "D", text: "Frontotemporal dementia" },
-      { key: "E", text: "Delirium" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **Key distinction**: Depression can mimic dementia (‘pseudodementia’). Patients may complain of memory loss but often recall with cues, unlike dementia patients who confabulate or forget entirely.",
-      "🧠 **Why correct**: This patient’s depressive symptoms (anhedonia, early morning wakening) + recall with prompting = depression. MRI white matter changes may reflect incidental small vessel disease, not causative.",
-      "❌ **Why not others**: (A) VaD = executive dysfunction, gait, not recall improvement. (C) AD = progressive episodic memory loss, no recall with cues. (D) FTD = personality change, disinhibition. (E) Delirium = acute, fluctuating, not chronic.",
-      "💡 **Exam pearl**: Always rule out depression in elderly with cognitive complaints before diagnosing dementia.",
-    ],
-  },
-  {
-    id: "VD-1029",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Hard",
-    vignetteTitle: "Rehabilitation in VaD",
-    stem: "A 72-year-old woman with vascular dementia after a lacunar stroke struggles with dressing, cooking, and managing finances. She has preserved insight and motivation. Which SINGLE supportive intervention will most improve her functional independence?",
+    id: "VaD-REDFLAGS-30004",
+    topic: "Geriatrics • Vascular dementia — Red Flags",
+    difficulty: "Medium",
+    vignetteTitle:
+      "When it’s not typical vascular dementia: spot the red flags",
+    stem: "A 78-year-old with hypertension and diabetes is referred for suspected vascular dementia after a transient episode of confusion. Over 6 weeks, family notes rapidly worsening attention, new daily headaches, low-grade fevers, and one focal seizure. Exam shows fluctuating consciousness, neck stiffness, and left homonymous hemianopia. Which feature set most strongly signals a RED FLAG requiring urgent reevaluation rather than routine vascular dementia workup?",
     options: [
       {
         key: "A",
-        text: "Occupational therapy with executive function training",
+        text: "Stepwise decline after strokes with executive slowing and gait disturbance over 3 years",
       },
-      { key: "B", text: "Antipsychotics to reduce behavioral issues" },
-      { key: "C", text: "SSRIs for depression" },
-      { key: "D", text: "Donepezil to enhance memory" },
-      { key: "E", text: "Vitamin B12 injections" },
+      {
+        key: "B",
+        text: "Rapid (weeks–months) global decline with fever, new headache, seizure, meningism, or papilledema",
+      },
+      {
+        key: "C",
+        text: "Gradual executive dysfunction with white-matter hyperintensities on prior MRI",
+      },
+      {
+        key: "D",
+        text: "Stable mild cognitive impairment responsive to cues and normal neuro exam",
+      },
+      {
+        key: "E",
+        text: "Slow progression with urinary urgency and pseudobulbar affect in the setting of lacunes",
+      },
     ],
-    correct: "A",
+    correct: "B",
     explanation_detail: [
-      "🌟 **Supportive management**: Non-pharmacological interventions are crucial. Occupational therapy helps patients develop strategies to compensate for executive dysfunction (lists, structured routines, cue cards). This preserves independence for longer.",
-      "🧠 **Why correct**: Patient has preserved motivation/insight → excellent candidate for OT and cognitive rehabilitation.",
-      "❌ **Why not others**: (B) Antipsychotics are last resort, with ↑ mortality. (C) SSRIs help mood, not core executive impairment. (D) Donepezil = minimal effect in VaD. (E) B12 deficiency = dementia mimic, but here diagnosis is established.",
-      "💡 **OSCE pearl**: If asked about supportive care in VaD → always mention OT, PT (gait), and speech therapy (language/executive tasks).",
+      "**1️⃣ Why it is the correct answer**",
+      "- **Vascular dementia (VaD)** typically evolves **stepwise** or slowly with vascular events—not as a **rapid febrile encephalopathy**.",
+      "- **Fever, new/worsening headache, seizure, meningism, papilledema, or focal cortical deficits** in a **weeks–months** time frame point to **infection, inflammation, neoplasm, hemorrhage, or venous thrombosis**.",
+      "- These features demand an **urgent acute neurology pathway** (imaging + CSF) rather than outpatient cognitive workup.",
+      "- [yellow]Safety hinge:[/yellow] **FAST + HOT + ELECTRIC + PRESSURE** → Fast decline, fever, seizures, raised ICP = **not routine VaD**. 🚨",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A:** Classic vascular timeline: **stepwise** dips after strokes with **executive/gait** issues—expected VaD pattern, not a red flag.",
+      "- **C:** Chronic executive slowing with WMH fits small-vessel VaD; urgent pathologies are not suggested.",
+      "- **D:** Stable MCI without neuro signs is low-risk; monitor and risk-modify, not emergent.",
+      "- **E:** Urinary urgency/pseudobulbar affect with lacunes fits subcortical VaD; again, not an acute red-flag cluster.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** [red]Stabilize ABCs; fingerstick glucose; focused neuro exam[/red]. **Confirms?** ❌ Safety first.",
+      "- **Next Diagnostic step:** **Urgent non-contrast CT head** to exclude hemorrhage/mass → proceed to **MRI brain with and without contrast** ± **MRV/CTV** if venous thrombosis suspected. **Confirms?** ➕ Identifies structural/inflammatory causes.",
+      "- **Best Diagnostic Step:** **Lumbar puncture** (after imaging rules out mass effect) with **cell count, protein/glucose, cultures**, **HSV/VZV PCR**, **autoimmune encephalitis panel**; **EEG** for seizures/encephalopathy. **Confirms?** ✅ Etiologic diagnosis.",
+      "- **Adjuncts:** CBC, CMP, ESR/CRP, blood cultures; autoimmune/vasculitis serologies; coagulation panel; consider **CTA** for vasculopathy.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Seizure control[/green] (benzodiazepine → levetiracetam), head elevation, analgesia/antipyretics; manage BP per stroke/ICP protocols.",
+      "- **First Line (empiric while pending):** **IV acyclovir** if encephalitis possible; add **broad-spectrum antibiotics** if meningitis/abscess suspected; consider **steroids** only when indicated (e.g., vasculitis/tumor edema) after infectious causes addressed.",
+      "- **Gold Standard:** **Cause-specific therapy** (antivirals/antibiotics, anticoagulation for CVST, immunotherapy for autoimmune encephalitis, neurosurgical management for mass/abscess). For confirmed VaD without red flags, pivot to **vascular risk control + secondary stroke prevention**.",
+      "**5️⃣ Full Pathophysiology Explained (why these are red flags)**",
+      "- **VaD** results from **ischemic/hemorrhagic vascular injury** accumulating over time, usually **non-febrile** and **non-epileptic** early.",
+      "- **Infectious/autoimmune/neoplastic** processes create **inflammation, edema, mass effect**, and **cortical hyperexcitability** → **fever, headache, seizures, papilledema**.",
+      "- **Cerebral venous sinus thrombosis** or **intracranial hemorrhage** can mimic cognitive decline but add **pressure signs** and **rapid change**.",
+      "- Time course is the tell: **weeks–months** with systemic/neuroirritative features ≠ degenerative/vascular slow burn.",
+      "**6️⃣ Red-flag checklist — switch to urgent workup when you see…**",
+      "- **Acute/subacute** cognitive decline (days–weeks) or **dramatic fluctuations** with reduced consciousness.",
+      "- **Fever**, **new headache**, **meningism**, **papilledema**, or **recurrent seizures/status**.",
+      "- **New focal cortical deficits** (aphasia, neglect, homonymous field cut) not explained by prior strokes.",
+      "- **Cancer/immunosuppression**, **anticoagulation/trauma**, **vasculitis** or **venous thrombosis** risk.",
+      "- [blue]If present → bypass routine VaD evaluation and pursue **acute neuroimaging + CSF/EEG** now[/blue].",
     ],
   },
   {
-    id: "VD-1030",
-    topic: "Geriatrics • Vascular dementia",
-    difficulty: "Moderate",
-    vignetteTitle: "Agitation in Vascular Dementia",
-    stem: "An 81-year-old man with vascular dementia becomes increasingly agitated and aggressive on the ward. Non-pharmacological strategies have failed, and he poses a risk to staff. Which SINGLE pharmacological intervention is most appropriate short-term?",
+    id: "VaD-DDX-30005",
+    topic: "Geriatrics • Vascular dementia — Differential Diagnosis",
+    difficulty: "Medium",
+    vignetteTitle:
+      "Parsing the differentials in a stepwise, executive-predominant dementia",
+    stem: "An 80-year-old with long-standing hypertension, diabetes, and atrial fibrillation has 2 years of cognitive decline with two clear stepwise 'drop-offs' after TIAs. Family notes slowed thinking, difficulty planning multi-step tasks, short-stepped gait, emotional lability, and early urinary urgency. Memory improves with cues, but he is distractible and slow. MRI shows multiple lacunes and confluent periventricular white-matter hyperintensities. Which diagnosis best explains this presentation?",
     options: [
-      { key: "A", text: "Haloperidol low-dose, short-term use" },
-      { key: "B", text: "Long-term benzodiazepine use" },
-      { key: "C", text: "High-dose haloperidol for sedation" },
-      { key: "D", text: "Start memantine" },
-      { key: "E", text: "Start SSRI therapy immediately" },
+      { key: "A", text: "Alzheimer’s disease (amnestic presentation)" },
+      { key: "B", text: "Dementia with Lewy bodies (DLB)" },
+      { key: "C", text: "Behavioral-variant frontotemporal dementia (bvFTD)" },
+      {
+        key: "D",
+        text: "Vascular dementia (VaD) — small-vessel disease with lacunes/WMH",
+      },
+      { key: "E", text: "Normal-pressure hydrocephalus (NPH)" },
+    ],
+    correct: "D",
+    explanation_detail: [
+      "**1️⃣ Why it is the correct answer**\n- **Temporal link to vascular events**: stepwise dips after TIAs/strokes are classic for **VaD**.\n- **Cognitive profile**: **psychomotor slowing** and **executive dysfunction** > pure amnesia; **memory improves with cues** (retrieval problem).\n- **Subcortical syndrome**: **gait disturbance** (short steps), **pseudobulbar affect**, **early urinary urgency** → fronto–subcortical disconnection.\n- **Imaging match**: [blue]lacunes + confluent periventricular white-matter hyperintensities (WMH)[/blue] consistent with small-vessel VaD.\n- [yellow]Pattern lock:[/yellow] vascular risks + stepwise course + executive/gait/affect/urinary + WMH/lacunes → **VaD**. 🧠🩸",
+      "**2️⃣ Why the other options are wrong**\n- **A. Alzheimer’s disease:** **Memory-first** decline with **poor cueing**, hippocampal atrophy; lacks vascular stepwise pattern and subcortical gait/UMN/frontal-release features.\n- **B. DLB:** **Visual hallucinations**, **cognitive fluctuations**, **spontaneous parkinsonism**, and **RBD** dominate; imaging does not hinge on lacunes/WMH burden.\n- **C. bvFTD:** Early **behavior/personality change**, disinhibition/apathy, stereotypies; MRI frontal/insular atrophy; stepwise vascular timeline is absent.\n- **E. NPH:** **Magnetic gait**, urinary incontinence, subcortical slowing **with ventriculomegaly**; cueable memory can occur, but TIAs/lacunes/WMH pattern points elsewhere.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**\n- **Initial Diagnostic step:** MoCA/MMSE with **attention/executive** emphasis (trail-making, clock, abstraction) + full neuro exam for **UMN/frontal-release** signs. **Confirms?** ❌ Suggests VaD profile.\n- **Next Diagnostic step:** 🧠 **MRI brain** → [blue]lacunes, cortical/subcortical infarcts, confluent periventricular WMH, microbleeds[/blue] that map to deficits/timeline. **Confirms?** ➕ Supports VaD.\n- **Best Diagnostic Step:** **Clinico-radiologic causality**: correlate **timeline (post-TIA/stroke/stepwise)** + **lesion load/location**; consider **CSF AD biomarkers or amyloid PET** if mixed AD/VaD is suspected. **Confirms?** ✅ VaD (or mixed).",
+      "**4️⃣ Management / Treatment (in order)**\n- **Initial Management:** [green]Aggressive vascular risk control[/green] — guideline BP, statin per ASCVD risk, diabetes optimization, smoking cessation, Mediterranean diet, exercise.\n- **First Line:** [green]Antiplatelet therapy[/green] for non-cardioembolic disease; **anticoagulation** for AF if indicated; **PT/OT** for gait; **cognitive rehab** (external aids, task sequencing); treat depression/apathy and **pseudobulbar affect**.\n- **Gold Standard:** No cure; [green]prevent further vascular hits[/green]. Consider **cholinesterase inhibitor/memantine** for symptomatic benefit in selected VaD or **mixed AD/VaD** (modest effect). [red]Avoid hypotension/over-sedation[/red].",
+      "**5️⃣ Full Pathophysiology Explained (DDx focus)**\n- **VaD:** ischemic/hemorrhagic injury (lacunes, WMH, infarcts) → **fronto–subcortical disconnection** → slowing/executive deficits, gait/affect/urinary changes.\n- **AD:** **Aβ/tau** pathology → hippocampal storage failure → amnestic syndrome with poor cueing.\n- **DLB:** **α-synuclein** spread → hallucinations/fluctuations/parkinsonism; visuospatial deficits early.\n- **bvFTD:** **TDP-43/tau** in frontal–insular networks → behavior/executive change > memory.\n- **NPH:** CSF dynamics → ventriculomegaly → gait then continence/cognition; potentially shunt-responsive.",
+      "**6️⃣ Symptoms — pattern recognition for DDx**\n- **VaD:** Stepwise or fluctuating decline; **executive slowing**, **gait disturbance**, **pseudobulbar affect**, **early urinary urgency**; memory **helped by cues**; MRI with **lacunes/WMH**.\n- **AD:** Gradual memory-first decline; **poor cueing**; hippocampal atrophy.\n- **DLB:** Hallucinations, fluctuations, **spontaneous parkinsonism**, RBD.\n- **bvFTD:** Disinhibition/apathy, loss of empathy, stereotypies; frontal atrophy.\n- **NPH:** **Magnetic gait** + ventriculomegaly + urinary incontinence; tap test may help predict shunt response.\n- [purple]Pearl:[/purple] ==Cueable memory + executive/gait/affect/urinary + vascular timeline → choose **VaD** over AD/DLB/FTD/NPH==",
+    ],
+  },
+  {
+    id: "VaD-INV-30006",
+    topic: "Geriatrics • Vascular dementia — Best Initial Investigation",
+    difficulty: "Medium",
+    vignetteTitle: "First test when you suspect vascular dementia",
+    stem: "An 81-year-old with hypertension, diabetes, and atrial fibrillation has 2 years of stepwise cognitive decline after TIAs. Family notes slowed thinking, trouble organizing tasks, short-stepped gait, emotional lability, and early urinary urgency. Bedside testing shows impaired set-shifting and attention; delayed recall improves with cues. What is the **best initial investigation**?",
+    options: [
+      { key: "A", text: "Non-contrast CT head" },
+      {
+        key: "B",
+        text: "MRI brain with vascular/small-vessel protocol (T1/T2/FLAIR/DWI/SWI)",
+      },
+      { key: "C", text: "CSF Alzheimer biomarkers (Aβ42/40, p-tau, t-tau)" },
+      { key: "D", text: "FDG-PET brain" },
+      { key: "E", text: "Comprehensive neuropsychological testing" },
+    ],
+    correct: "B",
+    explanation_detail: [
+      "**1️⃣ Why it is the correct answer**",
+      "- **MRI brain with a small-vessel/vascular protocol (T1/T2/FLAIR/DWI/SWI)** is the **best initial investigation** for suspected vascular dementia (VaD).",
+      "- MRI provides **superior sensitivity** to detect **lacunes, strategic infarcts, confluent white-matter hyperintensities (WMH), microbleeds**, and **acute/subacute ischemia** (DWI).",
+      "- The pattern/burden and **anatomic mapping to deficits and timeline** establish the clinico-radiologic link essential for VaD.",
+      "- SWI flags **microbleeds** (hypertensive SVD vs CAA), informing antithrombotic risk; FLAIR quantifies **WMH** load.",
+      "- [yellow]Bottom line:[/yellow] MRI both **rules out mimics** and **demonstrates vascular injury** that matches the clinical story. 🧠🩸",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A. CT head:** Useful if MRI unavailable/contraindicated or to exclude acute bleed, but **insensitive** for WMH, lacunes, and microbleeds.",
+      "- **C. CSF AD biomarkers:** Helpful to assess **mixed AD/VaD**, but **not first**—doesn’t show vascular injury or stroke burden.",
+      "- **D. FDG-PET:** May show network hypometabolism but is **nonspecific** and secondary to structural imaging.",
+      "- **E. Neuropsych testing:** Quantifies deficits; **supports** diagnosis but cannot demonstrate cerebrovascular lesions.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Cognitive screen targeting **attention/executive** functions (trail-making, clock, abstraction) + neuro exam for **UMN/frontal-release** signs. **Confirms?** ❌ Suggests VaD profile.",
+      "- **Next Diagnostic step (Best Initial Investigation):** 🧠 **MRI brain (T1/T2/FLAIR/DWI/SWI)** → [blue]lacunes, WMH (Fazekas), microbleeds, strategic infarcts[/blue] that map to symptoms and stepwise timeline. **Confirms?** ➕ Supports.",
+      "- **Best Diagnostic Step (to secure causality/mixed etiologies):** Correlate **timeline + lesion location/burden**; add **CSF AD biomarkers or amyloid PET** if mixed AD/VaD suspected. **Confirms?** ✅ Clinico-radiologic VaD (or mixed).",
+      "- **Adjuncts:** Vascular workup (ECG for AF, carotid US/CTA/MRA, echocardiography), lipids/A1c, ambulatory BP, sleep apnea screen.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Aggressive vascular risk control[/green] — guideline BP targets, statin per ASCVD risk, diabetes optimization, smoking cessation, Mediterranean diet, exercise.",
+      "- **First Line:** [green]Antiplatelet therapy[/green] for non-cardioembolic disease; **anticoagulation** for AF if indicated; **PT/OT** for gait; **cognitive rehab** (external aids, task sequencing); treat depression/apathy and **pseudobulbar affect**.",
+      "- **Gold Standard:** No cure; [green]prevent further vascular hits[/green]. Consider **cholinesterase inhibitor/memantine** for symptomatic benefit in selected VaD or **mixed AD/VaD** (modest effect). [red]Avoid hypotension/over-sedation[/red].",
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- **Small-vessel disease** (arteriolosclerosis, lipohyalinosis) and **infarcts/hemorrhages** disrupt **fronto–subcortical circuits**, producing **slowing, executive dysfunction, gait disturbance, affect/urinary changes**.",
+      "- MRI visualizes the **network disconnection** (WMH, lacunes) and **hemorrhagic markers** (microbleeds) that drive the syndrome.",
+      "- Establishing a **temporal and anatomic link** between lesions and cognitive course is central to diagnosing VaD.",
+      "**6️⃣ Symptoms — pattern recognition link to imaging**",
+      "- **Cueable memory with executive slowing** 🧩 ↔ **WMH/lacunes** in fronto-subcortical tracts.",
+      "- **Short-stepped gait & early urgency** 🚶‍♂️🚻 ↔ subcortical WM involvement.",
+      "- **Pseudobulbar affect** 😢😅 ↔ corticobulbar tract disruption.",
+      "- [purple]Pearl:[/purple] ==Suspected VaD? **MRI with DWI/FLAIR/SWI** first; then consider **AD biomarkers** if mixed disease is on the table==",
+    ],
+  },
+  {
+    id: "VaD-GOLD-30007",
+    topic: "Geriatrics • Vascular dementia — Gold Standard Investigation",
+    difficulty: "Medium",
+    vignetteTitle: "What definitively confirms vascular dementia etiology?",
+    stem: "An 82-year-old with stepwise cognitive decline after TIAs shows multiple lacunes and confluent periventricular WMH on MRI. Neuro exam reveals frontal release signs, mild right pronator drift, and short-stepped gait. CSF Alzheimer biomarkers are non-AD. Family asks: “What is the final, gold standard test that proves this is vascular dementia?”",
+    options: [
+      {
+        key: "A",
+        text: "MRI brain with volumetric analysis and Fazekas scoring",
+      },
+      { key: "B", text: "FDG-PET brain showing frontoparietal hypometabolism" },
+      {
+        key: "C",
+        text: "CSF Alzheimer biomarker profile (Aβ42/40, p-tau, t-tau)",
+      },
+      {
+        key: "D",
+        text: "Neuropathology (post-mortem or, rarely, biopsy) demonstrating cerebrovascular lesions sufficient to cause the cognitive syndrome",
+      },
+      {
+        key: "E",
+        text: "Amyloid PET to exclude coexisting Alzheimer’s disease",
+      },
+    ],
+    correct: "D",
+    explanation_detail: [
+      "**1️⃣ Why it is the correct answer**",
+      "- **Gold standard = tissue diagnosis**: **Neuropathology** directly shows **cerebrovascular brain injury** (macro/microinfarcts, lacunes, microhemorrhages, small-vessel arteriolosclerosis, CAA) in patterns/severity **sufficient to explain the cognitive syndrome**.",
+      "- Clinical criteria rely on **clinico–radiologic correlation**; only pathology can **prove causality** and quantify mixed disease (e.g., AD + vascular).",
+      "- In practice this is almost always **post-mortem**; biopsy is **rare** and reserved for atypical inflammatory/neoplastic suspicions.",
+      "- [yellow]Bottom line:[/yellow] MRI/CSF/PET are **supportive**; **histopathology** is definitive. 🧠🔬",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A. MRI volumetrics/Fazekas:** Best **initial** structural tool and highly supportive, but **cannot prove** etiologic sufficiency or exclude mixed disease.",
+      "- **B. FDG-PET:** Shows network hypometabolism but is **nonspecific** for vascular vs degenerative etiologies.",
+      "- **C. CSF AD biomarkers:** Helpful to **exclude AD** or identify mixed pathology, yet **do not confirm** VaD.",
+      "- **E. Amyloid PET:** Useful to judge **amyloid co-pathology** (mixed AD/VaD) but is not definitive for vascular causation.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Cognitive screen emphasizing **attention/executive** domains + full neuro exam for **UMN/frontal-release** signs. **Confirms?** ❌ Suggests VaD profile.",
+      "- **Next Diagnostic step:** 🧠 **MRI brain (T1/T2/FLAIR/DWI/SWI)** → [blue]lacunes, WMH (Fazekas), microbleeds, strategic infarcts[/blue] that map to timeline/deficits. **Confirms?** ➕ Supports VaD.",
+      "- **Best Diagnostic Step (in vivo confirmation/mixing):** **Correlate clinical course with imaging**; add **CSF AD biomarkers** or **amyloid PET** if mixed AD/VaD suspected. **Confirms?** ✅ Clinico–radiologic diagnosis.",
+      "- **Gold Standard (definitive):** 🔬 **Neuropathology** showing **vascular lesions sufficient for cognitive impairment** ± quantification of **co-pathologies** (AD, Lewy, TDP-43). **Confirms?** ✅✅ Definitive.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Aggressive vascular risk control[/green] — BP targets, statin per ASCVD risk, diabetes optimization, smoking cessation, Mediterranean diet, exercise.",
+      "- **First Line:** [green]Antiplatelet therapy[/green] for non-cardioembolic disease; **anticoagulation** for AF if indicated; **PT/OT** for gait; **cognitive rehab**; treat depression/apathy and **pseudobulbar affect**.",
+      "- **Gold Standard (therapy reality):** No cure; [green]prevent further vascular hits[/green]. Consider **cholinesterase inhibitor/memantine** for symptomatic benefit in selected VaD or **mixed AD/VaD** (modest effect). [red]Avoid hypotension/over-sedation[/red].",
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- **Ischemic/hemorrhagic lesions** disrupt **fronto–subcortical circuits** → psychomotor slowing, executive dysfunction, gait/affect/urinary changes.",
+      "- **Small-vessel disease** (arteriolosclerosis, lipohyalinosis) causes **WMH**, lacunes; **microbleeds** reflect hypertensive SVD or **CAA**.",
+      "- Neuropathology quantifies **lesion burden and distribution**, establishing whether vascular injury is **sufficient** to account for dementia and how much **mixed pathology** contributes.",
+      "**6️⃣ Signs — pattern recognition link**",
+      "- **Executive slowing & cueable memory** 🧩 ↔ fronto–subcortical disconnection.",
+      "- **Gait disturbance, UMN/frontal-release signs** 🚶‍♂️✋ ↔ subcortical and corticospinal tract involvement.",
+      "- **Early urinary urgency** 🚻 ↔ descending control pathway disruption.",
+      "- [purple]Pearl:[/purple] ==MRI builds the case; **neuropathology** closes it==",
+    ],
+  },
+  {
+    id: "VaD-ETIO-30008",
+    topic: "Geriatrics • Vascular dementia — Etiology (Causes)",
+    difficulty: "Medium",
+    vignetteTitle: "What’s the underlying cause in vascular dementia?",
+    stem: "An 82-year-old with long-standing hypertension, diabetes, and hyperlipidemia has a 3-year history of stepwise cognitive decline following TIAs. MRI shows multiple lacunar infarcts in the basal ganglia and thalamus, confluent periventricular white-matter hyperintensities, and scattered microbleeds on SWI. Which underlying **etiology** best explains this presentation?",
+    options: [
+      {
+        key: "A",
+        text: "Small-vessel ischemic disease with arteriolosclerosis/lipohyalinosis causing lacunes, white-matter ischemia, and microbleeds",
+      },
+      {
+        key: "B",
+        text: "Primary amyloid-β plaques and tau tangles (Alzheimer pathology) without vascular lesions",
+      },
+      {
+        key: "C",
+        text: "α-synuclein (Lewy body) pathology leading to visual hallucinations and parkinsonism",
+      },
+      {
+        key: "D",
+        text: "Frontotemporal lobar degeneration with TDP-43 causing semantic memory loss",
+      },
+      {
+        key: "E",
+        text: "Normal-pressure hydrocephalus with impaired CSF absorption and ventriculomegaly",
+      },
     ],
     correct: "A",
     explanation_detail: [
-      "🌟 **Behavioral management**: First-line = non-drug approaches (environmental control, reassurance, staff training). If risk persists, NICE allows short-term low-dose antipsychotics (haloperidol, risperidone). Always reassess regularly.",
-      "🧠 **Why correct**: Low-dose haloperidol is effective for acute agitation, but only for the shortest period necessary due to ↑ risk of stroke, mortality, and extrapyramidal side effects.",
-      "❌ **Why not others**: (B) Benzodiazepines cause sedation, falls, delirium. (C) High-dose haloperidol = dangerous. (D) Memantine = cognitive drug, not acute agitation. (E) SSRIs = long-term mood, not acute control.",
-      "💡 **Clinical pearl**: Always document non-pharmacological attempts first. In OSCEs, examiners love if you mention risk–benefit discussion with family.",
+      "**1️⃣ Why it is the correct answer**",
+      "- **Vascular dementia (VaD)** arises when **cerebrovascular lesions** are sufficient to cause the cognitive syndrome.",
+      "- The most common cause is **small-vessel disease (SVD)** due to **arteriolosclerosis/lipohyalinosis** from chronic HTN/diabetes → **lacunes** and **white-matter hyperintensities (WMH)**.",
+      "- **SWI microbleeds** reflect hypertensive SVD (deep) or CAA (lobar); here vascular risks + deep lesions favor **hypertensive SVD**.",
+      "- Clinically matches **stepwise decline** with **executive slowing/gait** from fronto–subcortical disconnection.",
+      "- [yellow]Etiology lock:[/yellow] vascular risks + lacunes/WMH + microbleeds → **small-vessel ischemic disease**. 🧠🩸",
+      "**2️⃣ Why the other options are wrong**",
+      "- **B. Alzheimer pathology:** Explains amnestic **storage** failure with hippocampal atrophy, not stepwise vascular injury (though mixed disease can coexist).",
+      "- **C. Lewy body disease:** Hallucinations, fluctuations, spontaneous parkinsonism dominate; imaging isn’t lacune/WMH/microbleed-centric.",
+      "- **D. FTLD–TDP:** Language/behavior-led syndromes (svPPA/bvFTD); not a vascular lesion model.",
+      "- **E. NPH:** Triad (magnetic gait, incontinence, cognitive slowing) with **ventriculomegaly**—not the lacune/WMH/microbleed pattern.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Cognitive screen focused on **attention/executive** (trail-making, clock, abstraction) + vascular risk inventory. **Confirms?** ❌ Suggests VaD/SVD profile.",
+      "- **Next Diagnostic step:** 🧠 **MRI brain (T1/T2/FLAIR/DWI/SWI)** → [blue]lacunes, confluent WMH (Fazekas), microbleeds[/blue]; DWI for acute/subacute hits. **Confirms?** ➕ Supports vascular etiology.",
+      "- **Best Diagnostic Step:** **Clinico–radiologic correlation** (timeline after TIAs/strokes + lesion distribution) ± **CSF AD biomarkers or amyloid PET** to assess **mixed AD/VaD**. **Confirms?** ✅ Establishes vascular causality (or mixed).",
+      "- **Adjuncts:** Vascular workup (ECG/AF, carotid US/CTA/MRA, echocardiography), lipids/A1c, ambulatory BP, sleep apnea screen.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Aggressive vascular risk control[/green] — BP per guideline, statin per ASCVD risk, diabetes optimization, smoking cessation, Mediterranean diet, exercise.",
+      "- **First Line:** [green]Antiplatelet therapy[/green] for non-cardioembolic ischemia; **anticoagulation** for AF if indicated; **PT/OT** for gait; **cognitive rehab** with external aids; treat depression/apathy and **pseudobulbar affect**.",
+      "- **Gold Standard:** No cure; [green]prevent further vascular hits[/green]. Consider **cholinesterase inhibitor/memantine** for symptomatic benefit in selected VaD or **mixed AD/VaD** (modest effect). [red]Avoid hypotension/over-sedation** which worsens perfusion/cognition[/red].",
+      "**5️⃣ Full Pathophysiology Explained (Etiology focus)**",
+      "- **Chronic hypertension/diabetes** → **arteriolosclerosis** (wall thickening, lipohyalinosis) → luminal narrowing and impaired autoregulation.",
+      "- Result: **ischemic white-matter injury** (WMH), **lacunar infarcts** in deep gray/WM tracts, and **microbleeds** from fragile vessels.",
+      "- These lesions disconnect **fronto–subcortical circuits** → **psychomotor slowing, executive dysfunction, gait disturbance, pseudobulbar affect, urinary urgency**.",
+      "- **CAA** may coexist (lobar microbleeds), and **mixed AD** is common—vascular injury lowers **cognitive reserve**, unmasking degenerative pathology.",
+      "- [purple]Mnemonic:[/purple] “**HITs to small pipes → slow mind & short steps**.”",
+      "**6️⃣ Symptoms — cause → effect mapping**",
+      "- **Arteriolosclerosis → WMH/lacunes** 🧩 → **executive slowing** and **cueable memory** (retrieval deficit).",
+      "- **Deep microbleeds** ⚫ → hypertensive SVD marker; caution with antithrombotics.",
+      "- **Fronto–subcortical disconnection** 🔗 → **gait disturbance** and **pseudobulbar affect**.",
+      "- **Strategic small infarcts (thalamus/caudate)** 🎯 → disproportionate executive/attention deficits.",
+      "- [blue]Imaging–clinic link:[/blue] Lesion burden/distribution should **map to the symptoms and stepwise timeline**.",
+    ],
+  },
+  {
+    id: "VaD-COMP-30009",
+    topic: "Geriatrics • Vascular dementia — Complications",
+    difficulty: "Medium",
+    vignetteTitle:
+      "What high-impact complication should you anticipate in vascular dementia?",
+    stem: "An 82-year-old with vascular dementia due to small-vessel disease (multiple lacunes, confluent periventricular WMH) and atrial fibrillation presents for follow-up. BP averages 152/88 mmHg at home, LDL 120 mg/dL, A1c 7.9%. Gait is short-stepped with two near-falls this month. He is inconsistently taking his DOAC and has missed several BP pills. Which complication is most important to anticipate and actively prevent over the next year?",
+    options: [
+      {
+        key: "A",
+        text: "Recurrent ischemic stroke causing further stepwise cognitive decline and disability",
+      },
+      {
+        key: "B",
+        text: "Early visual hallucinations requiring antipsychotics",
+      },
+      {
+        key: "C",
+        text: "Amyloid-related imaging abnormalities (ARIA) from anti-amyloid therapy",
+      },
+      { key: "D", text: "Serotonin syndrome due to SSRI use" },
+      { key: "E", text: "Autoimmune encephalitis following viral illness" },
+    ],
+    correct: "A",
+    explanation_detail: [
+      "**1️⃣ Why it is the correct answer**",
+      "- **Vascular dementia (VaD)** reflects accumulated **cerebrovascular injury**; the single **highest-impact future risk** is **another stroke** that accelerates disability and cognition loss.",
+      "- The vignette shows **uncontrolled vascular factors** (HTN, DM, lipids), **AF with poor anticoagulation adherence**, and **gait instability**—a perfect storm for **recurrent ischemic events**.",
+      "- Preventing **new infarcts** changes the slope of decline more than any cognitive drug in VaD; secondary prevention is the **main therapeutic lever**.",
+      "- [yellow]Clinical rule:[/yellow] In VaD, the next stroke is the biggest complication to anticipate and prevent. 🧠🩸",
+      "**2️⃣ Why the other options are wrong**",
+      "- **B (DLB feature):** Visual hallucinations point to **Lewy body dementia**, not VaD; antipsychotics risk sensitivity in DLB and are not the central VaD complication.",
+      "- **C (ARIA):** ARIA is tied to **anti-amyloid mAbs** used in biomarker-positive AD, not standard in pure VaD.",
+      "- **D (Serotonin syndrome):** Possible with polypharmacy but uncommon and not the dominant risk in VaD management planning.",
+      "- **E (Autoimmune encephalitis):** Typically **subacute, inflammatory**; not a foreseeable complication of chronic small-vessel VaD.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Quantify **vascular risk** and **adherence** → home BP log, A1c/lipids, med reconciliation, AF anticoagulation status. **Confirms?** ❌ Risk profiles the patient.",
+      "- **Next Diagnostic step:** **MRI brain (baseline for trajectory)** if not recent to document WMH/lacune burden; **carotid duplex/CTA/MRA** and **echocardiography** if large-artery or cardioembolic sources suspected. **Confirms?** ➕ Identifies stroke mechanisms.",
+      "- **Best Diagnostic Step:** Implement a **secondary stroke prevention plan** with targets (BP, LDL, A1c) and **AF anticoagulation** verification (level/adherence/contraindications). **Confirms?** ✅ Action plan addressing the preventable complication.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Tight vascular control[/green] — BP target per guideline (often <130/80 if tolerated), **high-intensity statin**, DM optimization, smoking cessation, Mediterranean diet, exercise; **fall prevention** (PT, home safety).",
+      "- **First Line:** [green]Antithrombotic strategy[/green] — **anticoagulation for AF** (DOAC preferred unless contraindicated); **single antiplatelet** for non-cardioembolic disease; avoid dual therapy unless specific indication. Adherence supports: pillboxes, caregiver oversight, pharmacy sync.",
+      "- **Gold Standard:** [green]Prevent further vascular hits[/green] via **comprehensive secondary prevention bundle** (BP, lipids, DM, AF anticoagulation, sleep apnea treatment). Consider **cholinesterase inhibitor/memantine** in selected VaD/mixed AD–VaD for modest symptomatic benefit; [red]avoid hypotension/over-sedation[/red] which worsen perfusion and falls.",
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- **Small-vessel disease** (arteriolosclerosis/lipohyalinosis) plus **cardioembolism** (AF) create **recurrent ischemic insults** → additive **fronto–subcortical disconnection**.",
+      "- Each new infarct/lacune further degrades **processing speed, executive control, gait**, and continence networks → **stepwise decline**.",
+      "- Secondary prevention targets the **mechanisms of injury** (hemodynamic, thromboembolic, metabolic) rather than downstream symptoms.",
+      "**6️⃣ Complications — pattern recognition & prevention map**",
+      "- **Recurrent ischemic stroke** 🎯 → stepwise cognitive/functional losses — **primary target for prevention**.",
+      "- **Intracerebral hemorrhage** ⚠️ → consider if **microbleeds/CAA** or uncontrolled HTN; adjust antithrombotic risk.",
+      "- **Falls and fractures** 🦴 → short-stepped gait, weakness; mitigate with PT/home safety/vision review.",
+      "- **Depression/apathy & pseudobulbar affect** 😢😅 → treat to reduce disability and caregiver strain.",
+      "- **Urinary incontinence** 🚻 → behavioral/med strategies; avoid anticholinergics when possible.",
+      "- [purple]Pearl:[/purple] ==In VaD, **prevent the next vascular hit**—it’s the complication that most changes the trajectory==",
+    ],
+  },
+  {
+    id: "VaD-EPI-30010",
+    topic: "Geriatrics • Vascular dementia — Epidemiology",
+    difficulty: "Medium",
+    vignetteTitle: "How common is vascular dementia, and in whom?",
+    stem: "A 79-year-old clinic asks for a brief data sheet on vascular dementia (VaD) to guide resource planning. They serve an older population with high rates of hypertension, diabetes, and stroke. They want to know how common VaD is relative to other dementias, how age and geography influence risk, and what patterns of cerebrovascular disease are typically involved.",
+    options: [
+      {
+        key: "A",
+        text: "VaD is rare (<1% of dementias) and occurs mostly in young adults without vascular risk factors",
+      },
+      {
+        key: "B",
+        text: "VaD accounts for a substantial minority of dementia cases, commonly coexisting with Alzheimer pathology; risk rises with age and vascular burden",
+      },
+      {
+        key: "C",
+        text: "VaD incidence is equal across ages and is unrelated to stroke prevalence",
+      },
+      {
+        key: "D",
+        text: "VaD is primarily a pediatric condition linked to congenital heart disease",
+      },
+      {
+        key: "E",
+        text: "VaD occurs only after large hemispheric infarcts; small-vessel disease is not epidemiologically relevant",
+      },
+    ],
+    correct: "B",
+    explanation_detail: [
+      "**1️⃣ Why it is the correct answer**",
+      "- **VaD** represents a **substantial minority** of dementias globally and frequently appears as **mixed disease** with Alzheimer pathology.",
+      "- Prevalence and incidence **increase sharply with age**, mirroring the epidemiology of stroke and small-vessel disease.",
+      "- **Population vascular burden** (hypertension, diabetes, AF, dyslipidemia, smoking) tracks with higher VaD rates across regions.",
+      "- **Mixed AD/VaD** is common in clinic and autopsy series, explaining overlapping phenotypes and emphasizing biomarker use.",
+      "- [yellow]Planning pearl:[/yellow] Where **stroke** is common, **VaD** (and mixed dementia) will be common. 🧠🩸",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A:** VaD is **not rare** and is most prevalent in **older adults with vascular risks**, not the young.",
+      "- **C:** Risk is **age- and stroke-dependent**; it is **not uniform** across ages or geographies.",
+      "- **D:** Pediatric VaD is **not** a standard entity; adult cerebrovascular disease drives VaD.",
+      "- **E:** **Small-vessel disease** (lacunes/WMH/microbleeds) is **epidemiologically central**; VaD does **not** require a massive cortical infarct.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Define clinic population **risk profile** (age distribution, HTN/DM/AF rates, stroke prevalence). **Confirms?** ❌ Frames expected VaD burden.",
+      "- **Next Diagnostic step:** Track **incident strokes/TIAs** and **MRI markers** (WMH burden, lacunes, microbleeds) in your cohort. **Confirms?** ➕ Links cerebrovascular load to cognitive outcomes.",
+      "- **Best Diagnostic Step:** Build a **mixed-dementia pathway** (MRI + cognitive profile + optional AD biomarkers) to separate **pure VaD** from **mixed AD/VaD**. **Confirms?** ✅ Better epidemiologic classification.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Clinic-level prevention bundle[/green] — BP programs, diabetes optimization, statins per ASCVD risk, smoking cessation, exercise/diet coaching.",
+      "- **First Line:** [green]Secondary stroke prevention pathways[/green] for any cerebrovascular event (antithrombotics, AF anticoagulation, carotid evaluation, OSA screening).",
+      "- **Gold Standard:** [green]Population risk reduction** + **equitable stroke care access**[/green]; cognitive rehab and caregiver support networks for established cases.",
+      "**5️⃣ Full Pathophysiology Explained (Epi lens)**",
+      "- VaD prevalence reflects **macro/microvascular brain injury** accumulation in aging populations.",
+      "- **Small-vessel disease** prevalence rises with **hypertension/diabetes** → more **WMH/lacunes** and higher VaD risk.",
+      "- **Geographic and socioeconomic gradients** (vascular risk control, stroke systems of care) modulate VaD rates across regions.",
+      "- **Mixed pathology** is frequent at autopsy, so real-world ‘VaD’ commonly rides alongside **AD changes**.",
+      "**6️⃣ Symptoms — epidemiology → phenotype link**",
+      "- Populations with heavy **WMH/lacune** burden show more **executive slowing, gait disturbance, and cueable memory**.",
+      "- Where **AF and large-artery disease** are prevalent, expect **stepwise dips** post-stroke.",
+      "- **Mixed AD/VaD** settings show blended **amnestic + executive** profiles.",
+      "- [purple]Service design tip:[/purple] ==If your clinic serves a high-stroke community, scale up **MRI access**, **BP/AF clinics**, and **post-stroke cognitive screening**==",
+    ],
+  },
+  {
+    id: "VaD-RISK-30011",
+    topic: "Geriatrics • Vascular dementia — Risk Factors",
+    difficulty: "Medium",
+    vignetteTitle:
+      "Which risk factor cluster drives vascular dementia the most?",
+    stem: "A 72-year-old with hypertension, type 2 diabetes, hyperlipidemia, atrial fibrillation, and a 40 pack-year smoking history asks what to prioritize to lower his chance of vascular dementia (VaD). He has mild white-matter hyperintensities on MRI but no prior stroke. Which risk factor set contributes most to VaD risk and is the highest-yield target for prevention?",
+    options: [
+      {
+        key: "A",
+        text: "Chronic hypertension, diabetes, dyslipidemia, smoking, and atrial fibrillation (vascular risk cluster)",
+      },
+      {
+        key: "B",
+        text: "Late-life bilingualism and high education (cognitive reserve)",
+      },
+      { key: "C", text: "APOE ε4 genotype and increasing age" },
+      { key: "D", text: "Gluten sensitivity and low vitamin C intake" },
+      { key: "E", text: "High coffee consumption and cold weather exposure" },
+    ],
+    correct: "A",
+    explanation_detail: [
+      "**1️⃣ Why it is the correct answer**",
+      "- **VaD** results from **cerebrovascular injury**; the dominant, modifiable drivers are the **vascular risk cluster**: **hypertension, diabetes, dyslipidemia, smoking, and atrial fibrillation**.",
+      "- These factors fuel **small-vessel disease** (arteriolosclerosis → WMH/lacunes/microbleeds) and **macrovascular events** (embolic/large-artery strokes).",
+      "- Treating the cluster sharply lowers **stroke incidence** and **white-matter disease progression**, shifting VaD trajectory. [green]Risk control = brain protection[/green].",
+      "- [yellow]High-yield prevention focus[/yellow]: BP control, glucose/lipid optimization, **smoking cessation**, and **anticoagulation for AF** when indicated. 🧠🩸",
+      "**2️⃣ Why the other options are wrong**",
+      "- **B. Cognitive reserve:** Protective modifier, not a **primary vascular driver**; useful but not the main lever for VaD risk.",
+      "- **C. APOE ε4 & age:** Important **nonmodifiable** risks (and stronger for AD than pure VaD); they guide counseling, not actionables.",
+      "- **D. Gluten/low vitamin C:** Not established determinants of VaD risk; **low-yield** relative to vascular control.",
+      "- **E. Coffee/cold exposure:** Associations are inconsistent/weak; neither is a core, targetable VaD risk factor.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Vascular risk inventory → **ambulatory/home BP**, A1c/fasting glucose, **lipids**, smoking status, **AF screening** (ECG ± ambulatory), BMI, sleep apnea screen. **Confirms?** ❌ Stratifies modifiable risk.",
+      "- **Next Diagnostic step:** 🧠 **MRI brain** (FLAIR/SWI) baseline to quantify **WMH/lacunes/microbleeds**; carotid US/CTA/MRA and echocardiography if mechanism suspected. **Confirms?** ➕ Maps current cerebrovascular burden.",
+      "- **Best Diagnostic Step:** Establish a **personalized prevention plan** with numeric targets (BP, LDL, A1c) and **AF anticoagulation** suitability; use **adherence checks** and pharmacist review. **Confirms?** ✅ Operationalizes risk reduction.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]BP control[/green] to guideline targets (often **<130/80** if tolerated); **smoking cessation** (counseling + NRT/varenicline), Mediterranean-style diet, **150–300 min/wk aerobic exercise**.",
+      "- **First Line:** [green]High-intensity statin** per ASCVD risk[/green]; **A1c** individualized (~<7–7.5% for most older adults); **anticoagulation for AF** with DOAC unless contraindicated; treat **OSA** (CPAP).",
+      "- **Gold Standard:** [green]Comprehensive vascular bundle** + adherence supports[/green] (blister packs, reminders, caregiver oversight). [red]Avoid hypotension/over-sedation[/red] which worsens perfusion and falls.",
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- **Hypertension/diabetes/dyslipidemia** → endothelial dysfunction, **arteriolosclerosis**, BBB injury → **WMH/lacunes** and slowed networks.",
+      "- **Smoking** → oxidative stress, inflammation, thrombosis risk → both SVD and macrovascular events.",
+      "- **Atrial fibrillation** → **cardioembolism** to strategic territories (thalamus, cortex) → stepwise cognitive drops.",
+      "- Cumulative lesions disconnect **fronto–subcortical circuits** → **executive slowing, gait changes, pseudobulbar affect, urinary urgency**.",
+      "- [blue]Concept link:[/blue] fewer vascular hits → slower lesion accrual → lower VaD probability/severity.",
+      "**6️⃣ Symptoms — risk → phenotype mapping**",
+      "- **Chronic HTN/SVD** 🩺 → **psychomotor slowing, cueable memory**, WMH on MRI.",
+      "- **AF/cardioembolism** ❤️ → **stepwise dips** after infarcts; focal signs may accrue.",
+      "- **Smoking + dyslipidemia** 🚬🧪 → atherosclerosis → large/small infarcts; faster disability.",
+      "- **Diabetes** 🍬 → microvascular injury → WM disconnection → executive dysfunction.",
+      "- [purple]Pearl:[/purple] ==Tackle **HTN, DM, lipids, smoking, AF**—they are the big levers that move VaD risk==",
     ],
   },
 ];
@@ -1047,7 +854,6 @@ function Calculator() {
 
 /* ----------------------- Responsive helpers ---------------------- */
 function useIsMobile(breakpoint = 768) {
-  // md = 768px
   const [mobile, setMobile] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth < breakpoint : false
   );
@@ -1060,7 +866,6 @@ function useIsMobile(breakpoint = 768) {
   return mobile;
 }
 
-/* Mobile question list modal (instead of fixed sidebar) */
 function MobileQuestionList({
   open,
   onClose,
@@ -1107,7 +912,7 @@ function MobileQuestionList({
                 <div className="min-w-0">
                   <p className="font-medium">Q{i + 1}</p>
                   <p className="text-sm text-slate-600 truncate">
-                    {QUESTIONS[qi].stem}
+                    {QUESTIONS[qi].stem.replace(/<[^>]*>/g, "")}
                   </p>
                   <div className="mt-2 flex gap-2">
                     <span className="text-xs rounded-full bg-purple-100 text-purple-700 px-2 py-0.5">
@@ -1136,12 +941,112 @@ function MobileQuestionList({
   );
 }
 
+/* ---------------------- Results Modal ---------------------- */
+function ResultsModal({ open, onClose, answers, order, elapsedMs, jumpTo }) {
+  const total = order.length;
+  const score = useMemo(
+    () =>
+      order.reduce(
+        (s, qi) =>
+          s + (answers[QUESTIONS[qi].id] === QUESTIONS[qi].correct ? 1 : 0),
+        0
+      ),
+    [answers, order]
+  );
+  const pct = Math.round((score / Math.max(total, 1)) * 100);
+  const wrong = useMemo(
+    () =>
+      order
+        .map((qi, i) => ({
+          i,
+          q: QUESTIONS[qi],
+          chosen: answers[QUESTIONS[qi].id],
+        }))
+        .filter(({ q, chosen }) => chosen && chosen !== q.correct),
+    [answers, order]
+  );
+  const mm = Math.floor(elapsedMs / 60000);
+  const ss = Math.floor((elapsedMs % 60000) / 1000);
+
+  return (
+    <Modal open={open} onClose={onClose} title="Results" maxW="max-w-2xl">
+      <div className="space-y-4">
+        <div className="grid sm:grid-cols-3 gap-3">
+          <div className="rounded-xl border p-4">
+            <p className="text-sm text-slate-600">Marks</p>
+            <p className="text-2xl font-bold">
+              {score} / {total}
+            </p>
+          </div>
+          <div className="rounded-xl border p-4">
+            <p className="text-sm text-slate-600">Percentage</p>
+            <p className="text-2xl font-bold">{pct}%</p>
+          </div>
+          <div className="rounded-xl border p-4">
+            <p className="text-sm text-slate-600">Time</p>
+            <p className="text-2xl font-bold">
+              {mm}m {ss}s
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border p-4">
+          <p className="font-semibold mb-2">Questions to review</p>
+          {wrong.length === 0 ? (
+            <p className="text-slate-600 text-sm">
+              Nice — no incorrect answers 🎉
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {wrong.map(({ i, q, chosen }) => (
+                <li
+                  key={q.id}
+                  className="flex items-start justify-between gap-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">
+                      Q{i + 1} — {q.vignetteTitle || "Vignette"}
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      Chosen: <span className="font-semibold">{chosen}</span> •
+                      Correct:{" "}
+                      <span className="font-semibold">{q.correct}</span>
+                    </p>
+                  </div>
+                  <button
+                    className="shrink-0 rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-50"
+                    onClick={() => {
+                      jumpTo(i);
+                      onClose();
+                    }}
+                  >
+                    Go to question →
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="rounded-lg border px-4 py-2 hover:bg-slate-50"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 /* --------------------------- Page --------------------------- */
 export default function VascularDementia() {
   const nav = useNavigate();
   const isMobile = useIsMobile();
 
-  // session/order state
+  // session/order
   const [order, setOrder] = useState(QUESTIONS.map((_, i) => i));
   const [started, setStarted] = useState(false);
 
@@ -1152,6 +1057,11 @@ export default function VascularDementia() {
   const [revealed, setRevealed] = useState({});
   const [showLabs, setShowLabs] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+
+  // timing
+  const startRef = useRef(null);
+  const endRef = useRef(null);
 
   // highlighting
   const [highlightMode, setHighlightMode] = useState(false);
@@ -1161,6 +1071,7 @@ export default function VascularDementia() {
   const total = QUESTIONS.length;
   const progress = ((currentIdx + 1) / Math.max(total, 1)) * 100;
 
+  /* highlight selection */
   const applySelectionHighlight = () => {
     const root = highlightRef.current;
     if (!root) return;
@@ -1199,7 +1110,7 @@ export default function VascularDementia() {
     });
   };
 
-  // start overlay pick
+  /* start mode */
   const handlePickMode = (mode) => {
     const newOrder =
       mode === "random"
@@ -1210,9 +1121,11 @@ export default function VascularDementia() {
     setAnswers({});
     setRevealed({});
     setStarted(true);
+    startRef.current = Date.now();
+    endRef.current = null;
   };
 
-  // keyboard navigation
+  /* keyboard nav */
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "ArrowRight" && currentIdx < total - 1)
@@ -1223,11 +1136,26 @@ export default function VascularDementia() {
     return () => window.removeEventListener("keydown", onKey);
   }, [currentIdx, total]);
 
-  // actions
+  /* actions */
   const choose = (opt) => setAnswers((a) => ({ ...a, [q.id]: opt }));
   const submit = () => setRevealed((r) => ({ ...r, [q.id]: true }));
-  const next = () => currentIdx < total - 1 && setCurrentIdx((i) => i + 1);
+  const next = () => {
+    const last = currentIdx >= total - 1;
+    if (!last) setCurrentIdx((i) => i + 1);
+  };
   const prev = () => currentIdx > 0 && setCurrentIdx((i) => i - 1);
+
+  /* finished state */
+  const finished = currentIdx === total - 1 && !!revealed[q.id];
+  useEffect(() => {
+    if (finished && !endRef.current) endRef.current = Date.now();
+  }, [finished]);
+
+  const elapsedMs = useMemo(() => {
+    if (startRef.current == null) return 0;
+    const end = endRef.current || Date.now();
+    return Math.max(0, end - startRef.current);
+  }, [showResults, revealed, currentIdx]);
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -1259,7 +1187,7 @@ export default function VascularDementia() {
         </div>
       </header>
 
-      {/* Floating toggle: mobile bottom-right; desktop left edge */}
+      {/* Sidebar toggle: mobile bottom-right; desktop left edge */}
       <button
         onClick={() => setSidebarOpen((s) => !s)}
         className={[
@@ -1275,7 +1203,7 @@ export default function VascularDementia() {
       {/* Content Row */}
       <div className="mx-auto max-w-[1100px] px-2 md:px-4 py-4">
         <div className="relative">
-          {/* Desktop slide-out Sidebar */}
+          {/* Desktop sidebar */}
           <aside
             className={[
               "hidden md:block",
@@ -1331,7 +1259,7 @@ export default function VascularDementia() {
                         <div className="min-w-0">
                           <p className="font-medium">Q{i + 1}</p>
                           <p className="text-sm text-slate-600 truncate">
-                            {qq.stem}
+                            {qq.stem.replace(/<[^>]*>/g, "")}
                           </p>
                           <div className="mt-2 flex gap-2">
                             <span className="text-xs rounded-full bg-purple-100 text-purple-700 px-2 py-0.5">
@@ -1439,7 +1367,9 @@ export default function VascularDementia() {
                             name={`ans-${q.id}`}
                             className="h-4 w-4 text-purple-600"
                             checked={chosen === opt.key}
-                            onChange={() => choose(opt.key)}
+                            onChange={() =>
+                              setAnswers((a) => ({ ...a, [q.id]: opt.key }))
+                            }
                             disabled={revealedThis}
                           />
                           <span className="text-[15px]">
@@ -1487,23 +1417,30 @@ export default function VascularDementia() {
                         >
                           ← Previous
                         </button>
+                        {currentIdx === total - 1 && (
+                          <button
+                            onClick={() => setShowResults(true)}
+                            className="rounded-xl border px-4 py-2 hover:bg-slate-50"
+                          >
+                            Results
+                          </button>
+                        )}
                       </>
                     )}
                   </div>
 
-                  {/* Explanation (single card) */}
+                  {/* Explanation */}
                   {revealed[q.id] && (
                     <div className="mt-2">
-                      <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
                         <p className="font-semibold text-slate-900 mb-2">
                           Explanation
                         </p>
                         <div className="space-y-2 text-slate-800">
                           {q.explanation_detail?.map((para, i) => (
-                            <p
-                              key={i}
-                              dangerouslySetInnerHTML={{ __html: para }}
-                            />
+                            <p key={i} className="leading-relaxed">
+                              <RichText text={para} />
+                            </p>
                           ))}
                         </div>
                       </div>
@@ -1568,7 +1505,7 @@ export default function VascularDementia() {
         <Calculator />
       </Modal>
 
-      {/* Mobile question list modal */}
+      {/* Mobile question list */}
       <MobileQuestionList
         open={isMobile && sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -1578,7 +1515,21 @@ export default function VascularDementia() {
         answers={answers}
       />
 
-      {/* Start choice (solid white overlay) */}
+      {/* Results */}
+      <ResultsModal
+        open={showResults}
+        onClose={() => setShowResults(false)}
+        answers={answers}
+        order={order}
+        elapsedMs={(() => {
+          if (startRef.current == null) return 0;
+          const end = endRef.current || Date.now();
+          return Math.max(0, end - startRef.current);
+        })()}
+        jumpTo={(i) => setCurrentIdx(i)}
+      />
+
+      {/* Start overlay */}
       <StartOverlay open={!started} onPick={handlePickMode} />
     </div>
   );
@@ -1598,7 +1549,7 @@ function StartOverlay({ open, onPick }) {
     <Modal
       open={open}
       onClose={() => {}}
-      title="Start Vascular Dementia Question Bank"
+      title="Start Vascular Dementia Bank"
       maxW="max-w-lg"
       overlayClass="bg-white"
     >

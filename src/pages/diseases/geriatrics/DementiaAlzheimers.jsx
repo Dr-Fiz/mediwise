@@ -1,922 +1,623 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+// src/pages/diseases/geriatrics/DementiaAlzheimers.jsx
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-/* ------------------------ Question Data ------------------------ */
-/* NOTE: Add images in /public and set q.image = "/file.png" if needed */
+/** ---------------- Inline RichText (bold/italics + color chips) ---------------- */
+function RichText({ text = "" }) {
+  let html = String(text);
+
+  // escape raw < > & but keep our tags
+  html = html
+    .replace(/&(?![a-zA-Z#0-9]+;)/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  // **bold** and *italic* / _italic_
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/(^|[^*])\*(?!\*)(.+?)\*(?!\*)/g, "$1<em>$2</em>");
+  html = html.replace(/_(.+?)_/g, "<em>$1</em>");
+
+  // ==yellow highlight==
+  html = html.replace(
+    /==(.+?)==/g,
+    "<mark style='background-color:#FEF3C7' class='px-1 rounded'>$1</mark>"
+  );
+
+  // [yellow]...[/yellow], [green]...[/green], etc.
+  const palette = {
+    yellow: "#FEF3C7",
+    green: "#D1FAE5",
+    blue: "#E0F2FE",
+    red: "#FFE4E6",
+    purple: "#EDE9FE",
+  };
+  Object.entries(palette).forEach(([name, bg]) => {
+    const re = new RegExp(`\\[${name}\\]([\\s\\S]+?)\\[\\/${name}\\]`, "gi");
+    html = html.replace(
+      re,
+      `<mark style="background-color:${bg}" class="px-1 rounded">$1</mark>`
+    );
+  });
+
+  // unescape our intended tags
+  html = html
+    .replace(/&lt;strong&gt;/g, "<strong>")
+    .replace(/&lt;\/strong&gt;/g, "</strong>")
+    .replace(/&lt;em&gt;/g, "<em>")
+    .replace(/&lt;\/em&gt;/g, "</em>")
+    .replace(/&lt;mark /g, "<mark ")
+    .replace(/&lt;\/mark&gt;/g, "</mark>");
+
+  return <span dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+/* ------------------------ Alzheimer’s Question Bank ------------------------ */
+/* Add images in /public and set q.image = "/file.png" if you want figures */
 const QUESTIONS = [
   {
-    id: "AD-1001",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Easy",
-    vignetteTitle: "Clinic Vignette",
-    stem:
-      "A 74-year-old woman presents with 18 months of progressive memory problems. " +
-      "Her daughter notes repeated questions and difficulty recalling recent conversations. " +
-      "Examination shows preserved motor function and normal gait. MoCA is 22/30 with impaired delayed recall. " +
-      "Which SINGLE investigation is most appropriate first line to evaluate potentially reversible contributors?",
-    options: [
-      { key: "A", text: "Lumbar puncture for CSF amyloid and tau" },
-      { key: "B", text: "FDG-PET to assess temporoparietal hypometabolism" },
-      { key: "C", text: "Routine blood tests incl. TSH, B12, folate, and CMP" }, // correct
-      { key: "D", text: "EEG for diffuse slowing" },
-      { key: "E", text: "Genetic testing for APP/PSEN mutations" },
-    ],
-    correct: "C",
-    explanation_detail: [
-      "First principles: before diagnosing a primary neurodegenerative dementia, screen for reversible contributors. Low-cost labs pick up common culprits such as hypothyroidism, B12/folate deficiency, anaemia, infection and metabolic derangements.",
-      "Typical initial panel: FBC, U&E/CMP, LFT, TSH, B12/folate (± HbA1c/lipids, CRP/ESR as context dictates) and a depression screen. Imaging with CT/MRI is recommended, but bloods are usually the earliest, most accessible test.",
-      "Advanced biomarkers (CSF Aβ/tau) and FDG-PET are specialist tests reserved for atypical/early-onset or diagnostically uncertain cases. Routine EEG is not used for standard Alzheimer’s workup unless seizures/encephalopathy are suspected. APP/PSEN testing is for strong, early-onset familial patterns.",
-    ],
-  },
-  {
-    id: "AD-1002",
-    topic: "Geriatrics • Alzheimer’s disease",
+    id: "AD-CORE-20001",
+    topic: "Geriatrics • Alzheimer’s disease — Core Clinical Pattern",
     difficulty: "Medium",
-    vignetteTitle: "Therapeutics",
-    stem:
-      "An otherwise independent 76-year-old man is diagnosed with mild Alzheimer’s disease. " +
-      "Which SINGLE treatment is most appropriate to initiate for symptomatic benefit at this stage?",
+    vignetteTitle: "Which diagnosis best fits the hippocampal memory syndrome?",
+    stem: "A 74-year-old retired accountant has 2.5 years of gradually progressive memory decline. Family notes repeated questions, misplacing items, and getting lost on familiar routes. Language and behavior are relatively preserved early; no hallucinations or parkinsonism. Exam: oriented to person, not to date; recalls 0/3 after 5 minutes with poor cueing benefit. MoCA 20/30 (episodic memory and visuospatial deficits). MRI shows bilateral hippocampal and mesial temporal atrophy with relative sparing of frontal and occipital lobes. What is the most likely diagnosis?",
     options: [
-      { key: "A", text: "Memantine monotherapy" },
-      { key: "B", text: "Rivastigmine (acetylcholinesterase inhibitor)" }, // correct
-      { key: "C", text: "Haloperidol regular for behavioural symptoms" },
-      { key: "D", text: "High-dose vitamin E supplementation" },
-      { key: "E", text: "No pharmacologic therapy until moderate stage" },
+      { key: "A", text: "Alzheimer’s disease (amnestic presentation)" },
+      { key: "B", text: "Vascular dementia (multi-infarct)" },
+      { key: "C", text: "Dementia with Lewy bodies (DLB)" },
+      { key: "D", text: "Frontotemporal dementia—behavioral variant (bvFTD)" },
+      { key: "E", text: "Normal-pressure hydrocephalus (NPH)" },
     ],
-    correct: "B",
+    correct: "A",
     explanation_detail: [
-      "For mild–moderate Alzheimer’s, start a cholinesterase inhibitor (donepezil, rivastigmine, or galantamine). These agents provide modest improvements in cognition/ADLs and may slow decline.",
-      "Memantine is more often used in moderate–severe disease or when cholinesterase inhibitors are contraindicated/not tolerated; it can be added later in combination therapy.",
-      "Avoid routine antipsychotics: small, targeted, short-term use may be considered only for severe distress/psychosis after non-pharmacologic measures, given higher risks (stroke/mortality). Antioxidants (e.g., high-dose vitamin E) lack robust benefit and may carry harm.",
-      "Counsel on adverse effects (GI upset, bradycardia/syncope risk), do med reconciliation for anticholinergics, and combine with non-drug approaches (education, routines, carer support, exercise, hearing/vision optimisation).",
+      "**1️⃣ Why it is the correct answer**",
+      "- **Insidious, progressive episodic memory impairment** with poor cueing benefit is classic for **amnestic Alzheimer’s disease (AD)**.",
+      "- MRI pattern: [blue]**bilateral hippocampal/mesial temporal atrophy**[/blue] (medial temporal lobe) with relative sparing of frontal/occipital early → highly compatible with AD.",
+      "- Early **navigation problems**, **misplacing items**, and **repeating questions** reflect hippocampal consolidation deficits.",
+      "- Lack of early prominent **behavioral disinhibition**, **parkinsonism**, or **visual hallucinations** argues against FTD/DLB.",
+      "- [yellow]Pattern lock:[/yellow] gradual memory-first decline + hippocampal atrophy + poor cueing = **AD**. 🧠🗺️",
+
+      "**2️⃣ Why the other options are wrong**",
+      "- **B. Vascular dementia:** Often **stepwise** decline with focal deficits; MRI shows **strategic infarcts** or confluent white-matter disease—not isolated hippocampal atrophy.",
+      "- **C. DLB:** Core features are **visual hallucinations**, **cognitive fluctuations**, and **parkinsonism**; plus REM sleep behavior disorder—absent here.",
+      "- **D. bvFTD:** **Early personality/behavior change**, disinhibition/apathy, and frontal/insular atrophy, with **relative memory sparing** initially—mismatch.",
+      "- **E. NPH:** Triad = **gait disturbance** (magnetic), **urinary incontinence**, **subcortical cognitive slowing** + MRI with **ventriculomegaly**—not present.",
+
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Bedside cognitive screen (MoCA/MMSE) emphasizing **delayed recall** and cueing → poor recall with limited cueing benefit. **Confirms?** ❌ Suggests AD pattern.",
+      "- **Next Diagnostic step:** 🧠 **MRI brain** → [blue]hippocampal/mesial temporal atrophy[/blue]; exclude mass/subdural/strategic stroke. **Confirms?** ➕ Supports AD; rules out mimics.",
+      "- **Best Diagnostic Step (in vivo biomarker confirmation):** **CSF AD biomarkers** (↓Aβ42/Aβ42-40 ratio, ↑p-tau, ↑t-tau) **or** **amyloid PET** ± **tau PET**. **Confirms?** ✅ Biomarker-consistent AD.",
+      "- **Adjuncts:** Thyroid/B12, CMP, CBC to exclude reversible contributors; depression screen; sleep apnea screening if indicated.",
+
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Diagnosis disclosure, safety planning[/green] (driving/meds/finances), caregiver education, advance care planning, exercise + Mediterranean-style diet.",
+      "- **First Line:** [green]Symptomatic cognitive therapy[/green] — **cholinesterase inhibitor** (donepezil/rivastigmine/galantamine) for mild–moderate AD; **memantine** for moderate–severe or add-on.",
+      "- **Gold Standard:** No cure; [green]multidisciplinary care[/green] (OT/PT, cognitive rehab, caregiver support). Consider **disease-modifying anti-amyloid mAbs** only if **biomarker-positive**, appropriate stage, and patient can meet monitoring/ARIA risk protocols. [red]Avoid anticholinergics and sedatives when possible[/red].",
+
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- **Amyloid-β (Aβ)** dysmetabolism → extracellular **Aβ plaques**; **tau** hyperphosphorylation → intracellular **neurofibrillary tangles**.",
+      "- Pathology spreads in a **Braak-like pattern** from transentorhinal/hippocampal regions → association cortices, explaining memory-first decline.",
+      "- Synaptic dysfunction and neuroinflammation drive progressive network failure → atrophy on MRI, hypometabolism on FDG-PET.",
+      "- [blue]Hippocampal circuit disruption[/blue] impairs encoding/consolidation → poor delayed recall and weak cueing response.",
+
+      "**6️⃣ Symptoms — pattern recognition**",
+      "- **Forgetting recent events / repeating questions** 📝 → hippocampal consolidation failure.",
+      "- **Poor response to cues** 🧩 → storage (not retrieval) problem, consistent with AD.",
+      "- **Topographical disorientation** 🗺️ → parahippocampal/retrosplenial network involvement.",
+      "- **Language/behavior relatively preserved early** 💬 → contrasts with PPA/FTD.",
+      "- [purple]Think AD when you see:[/purple] ==gradual amnestic decline + hippocampal atrophy + poor cueing==.",
     ],
   },
   {
-    id: "AD-1003",
-    topic: "Geriatrics • Alzheimer’s disease",
+    id: "AD-SX-20002",
+    topic:
+      "Geriatrics • Alzheimer’s disease — Clinical Presentation (Symptoms)",
     difficulty: "Medium",
-    vignetteTitle: "Neuroimaging",
-    stem:
-      "A 72-year-old woman with gradual amnestic decline undergoes MRI brain. " +
-      "Which SINGLE radiologic feature most supports a diagnosis of Alzheimer’s pathology?",
-    options: [
-      { key: "A", text: "Marked frontal and anterior temporal lobe atrophy" },
-      { key: "B", text: "Occipital hypometabolism with visual hallucinations" },
-      { key: "C", text: "Medial temporal (hippocampal) and parietal atrophy" }, // correct
-      { key: "D", text: "Large-vessel territory infarcts in MCA distribution" },
-      { key: "E", text: "Symmetric basal ganglia calcifications" },
-    ],
-    correct: "C",
-    explanation_detail: [
-      "Structural imaging in Alzheimer’s commonly shows disproportionate medial temporal (hippocampal) and parietal atrophy, supporting an amnestic presentation.",
-      "Differentials by pattern: prominent frontal/anterior temporal atrophy suggests frontotemporal dementia; occipital involvement with visual hallucinations is more typical of Lewy body disease; territorial infarcts point to vascular dementia; basal ganglia calcifications are nonspecific and suggest other processes (e.g., metabolic).",
-      "Imaging is primarily to exclude structural/cerebrovascular causes and to support the clinical syndrome; advanced biomarkers/PET are reserved for atypical cases or research settings.",
-    ],
-  },
-  {
-    id: "AD-1001",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Easy",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 78-year-old retired teacher presents with complaints from her family about increasing forgetfulness over the past year. She frequently misplaces items like her glasses and keys and has trouble remembering recent conversations or appointments. She remains independent in daily activities. Her MMSE score is 24/30, with deficits in short-term recall and orientation to time. No history of stroke or substance abuse is reported. Which SINGLE management option is most appropriate to initiate for her suspected early Alzheimer’s disease?",
+    vignetteTitle: "Spot the amnestic Alzheimer pattern",
+    stem: "A 75-year-old retired teacher has 3 years of insidious memory decline. Family reports repeated questions, misplacing items, getting lost on familiar routes, and difficulty recalling recent conversations despite intact attention. Language is mostly fluent, with occasional word-finding pauses but intact grammar. No early hallucinations, REM sleep behavior disorder, parkinsonism, or major personality change. Exam: poor delayed recall with minimal cueing benefit; constructional copying mildly impaired. MRI shows bilateral hippocampal/mesial temporal atrophy. Which clinical constellation best identifies the underlying syndrome?",
     options: [
       {
         key: "A",
-        text: "Start high-dose donepezil to reverse cognitive decline",
+        text: "Early behavioral disinhibition, apathy, hyperorality; relatively spared episodic memory",
       },
       {
         key: "B",
-        text: "Recommend cognitive behavioral therapy as the primary intervention",
+        text: "Recurrent visual hallucinations, fluctuating attention, spontaneous parkinsonism, REM sleep behavior disorder",
       },
       {
         key: "C",
-        text: "Initiate cholinesterase inhibitor therapy, such as donepezil at a low dose",
-      }, // correct
-      { key: "D", text: "Prescribe memantine to manage behavioral symptoms" },
-      {
-        key: "E",
-        text: "Advise immediate institutionalization due to safety concerns",
-      },
-    ],
-    correct: "C",
-    explanation_detail: [
-      "First principles: Early Alzheimer’s disease (AD) is managed with cholinesterase inhibitors (e.g., donepezil) to improve cognition and function by increasing acetylcholine. Low-dose initiation (5 mg daily) minimizes side effects like nausea.",
-      "Management considerations: Donepezil is FDA-approved for mild AD (MMSE 21-26). Lifestyle interventions (e.g., exercise, cognitive stimulation) complement pharmacotherapy. Monitoring with MMSE every 6 months is recommended.",
-      "Why not others: High-dose donepezil (A) risks side effects without reversing disease. CBT (B) is adjunctive, not primary. Memantine (D) is for moderate-severe AD. Institutionalization (E) is premature for independent patients; safety aids (e.g., reminders) suffice.",
-    ],
-  },
-  {
-    id: "AD-1002",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Emergency Department Vignette",
-    stem: "An 82-year-old former engineer is brought to the emergency department due to worsening agitation and wandering at night over the last 6 months. He has a 3-year history of Alzheimer’s disease, with progressive memory loss and difficulty recognizing family. He requires assistance with dressing but eats independently. His MMSE score is 15/30. Current medications include donepezil 10 mg daily. Which SINGLE pharmacologic addition is most appropriate for his moderate Alzheimer’s disease and behavioral symptoms?",
-    options: [
-      {
-        key: "A",
-        text: "Increase donepezil dose to maximum to address agitation",
-      },
-      {
-        key: "B",
-        text: "Add an antipsychotic like haloperidol for immediate symptom control",
-      },
-      { key: "C", text: "Initiate memantine to complement donepezil therapy" }, // correct
-      { key: "D", text: "Prescribe lorazepam for sundowning" },
-      { key: "E", text: "Start sertraline without further evaluation" },
-    ],
-    correct: "C",
-    explanation_detail: [
-      "First principles: Moderate AD (MMSE 10-20) with behavioral symptoms (e.g., agitation, sundowning) is managed with memantine (NMDA antagonist) added to cholinesterase inhibitors to reduce glutamate excitotoxicity and improve cognition/behavior.",
-      "Management considerations: Start memantine at 5 mg daily, titrating to 10 mg twice daily. Non-pharmacologic strategies (e.g., structured routines) are first-line for agitation. Antipsychotics are reserved for severe, refractory cases due to risks.",
-      "Why not others: Increasing donepezil (A) may worsen agitation. Haloperidol (B) increases stroke/mortality risk. Lorazepam (D) worsens confusion/falls. Sertraline (E) requires mood evaluation first, as no depression is noted.",
-    ],
-  },
-  {
-    id: "AD-1003",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "An 85-year-old woman with a 7-year history of Alzheimer’s disease is nonverbal, requires full assistance with all ADLs, and has swallowing difficulties with 10% weight loss in 6 months. Her MMSE score is 6/30. She exhibits agitation during care. Current medications include donepezil 10 mg and memantine 10 mg twice daily. Which SINGLE management option is most appropriate to address her severe Alzheimer’s disease and agitation?",
-    options: [
-      {
-        key: "A",
-        text: "Discontinue donepezil and memantine due to lack of efficacy",
-      },
-      { key: "B", text: "Add low-dose quetiapine for agitation" }, // correct
-      {
-        key: "C",
-        text: "Increase memantine dose to address cognitive decline",
+        text: "Gait disturbance with urinary urgency/incontinence and subcortical cognitive slowing; ventriculomegaly",
       },
       {
         key: "D",
-        text: "Prescribe a high-calorie supplement without evaluation",
+        text: "Gradual, progressive **episodic memory** loss with poor cueing, navigation problems, and hippocampal atrophy; language/behavior relatively preserved early",
       },
-      { key: "E", text: "Recommend immediate hospice referral" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "First principles: Severe AD (MMSE <10) with agitation requires non-pharmacologic strategies first (e.g., calm environment). If ineffective, low-dose atypical antipsychotics (e.g., quetiapine 25 mg) can manage behavioral symptoms, with monitoring for stroke risk.",
-      "Management considerations: Palliative care addresses complications (e.g., swallowing issues). Swallowing evaluation is needed for weight loss. Donepezil/memantine may continue for modest benefits unless side effects dominate.",
-      "Why not others: Discontinuing medications (A) is controversial; benefits may persist. Increasing memantine (C) lacks evidence. Supplements (D) require swallowing assessment to prevent aspiration. Hospice (E) is premature without terminal prognosis.",
-    ],
-  },
-  {
-    id: "AD-1004",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 62-year-old accountant presents with a 2-year history of difficulty with problem-solving and organizing tasks. He struggles with spreadsheets and forgets colleague names but recalls recent events. His MMSE score is 26/30, with deficits in executive function. Family history includes a mother with dementia at age 65. Brain MRI shows mild frontal and temporal atrophy, and amyloid PET is positive. Which SINGLE management option is most appropriate for his suspected early-onset Alzheimer’s disease?",
-    options: [
-      { key: "A", text: "Start memantine to target executive dysfunction" },
-      { key: "B", text: "Initiate donepezil and refer for genetic counseling" }, // correct
-      { key: "C", text: "Order lumbar puncture for CSF analysis" },
-      { key: "D", text: "Prescribe an SSRI for possible depression" },
       {
         key: "E",
-        text: "Recommend cognitive training as the sole intervention",
+        text: "Nonfluent, effortful agrammatic speech with apraxia of speech; left inferior frontal atrophy",
       },
     ],
-    correct: "B",
+    correct: "D",
     explanation_detail: [
-      "First principles: Early-onset AD (EOAD) with executive dysfunction is managed with cholinesterase inhibitors (e.g., donepezil 5 mg) to improve cognition. Family history suggests genetic risk (e.g., PSEN1/APP), warranting genetic counseling.",
-      "Management considerations: Amyloid PET positivity confirms AD. Non-pharmacologic strategies (e.g., cognitive stimulation) complement therapy. Monitor with MoCA for atypical presentations.",
-      "Why not others: Memantine (A) is for moderate-severe AD. CSF analysis (C) is redundant with positive PET. SSRI (D) requires mood assessment; no depression is noted. Cognitive training (E) is adjunctive, not sole therapy.",
+      "**1️⃣ Why it is the correct answer**",
+      "- **Alzheimer’s disease (amnestic presentation)** is defined by **progressive episodic memory impairment**—failure of encoding/storage—leading to repeated questions and misplacing items.",
+      "- **Poor cueing benefit** distinguishes storage failure (AD) from retrieval failures seen in depression or subcortical states.",
+      "- Early **topographical disorientation** (getting lost) reflects medial temporal–parahippocampal network involvement.",
+      "- **Language and behavior relatively preserved early** fits AD more than FTD or PPA at onset.",
+      "- Imaging tie-in: [blue]**hippocampal/mesial temporal atrophy**[/blue] supports the clinical pattern. [yellow]Pattern lock = amnestic AD[/yellow] 🧠📉",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A (bvFTD):** Early **behavioral disinhibition/apathy** and eating changes with relative memory sparing → frontal/insular syndrome, not memory-first AD.",
+      "- **B (DLB):** **Visual hallucinations**, **fluctuations**, **parkinsonism**, and **REM sleep behavior disorder** define DLB; absent here.",
+      "- **C (NPH):** Triad of **gait disturbance**, **urinary incontinence**, **cognitive slowing** with **ventriculomegaly**—not the hippocampal amnestic picture.",
+      "- **E (nfvPPA):** **Nonfluent agrammatic speech** and apraxia localize to left IFG/insular networks; this case has fluent language and memory-led decline.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Bedside cognitive screen (MoCA/MMSE) emphasizing **delayed recall** and cueing. **Confirms?** ❌ Suggests AD when recall is poor with minimal cueing benefit.",
+      "- **Next Diagnostic step:** 🧠 MRI brain → [blue]**hippocampal/mesial temporal atrophy**[/blue]; exclude mass/subdural/strategic stroke. **Confirms?** ➕ Supports AD pattern.",
+      "- **Best Diagnostic Step (biomarker confirmation):** **CSF AD profile** (↓Aβ42 or ↓Aβ42/40, ↑p-tau, ↑t-tau) **or** **amyloid PET** ± **tau PET**. **Confirms?** ✅ Biomarker-consistent AD.",
+      "- **Adjuncts:** TSH/B12/CBC/CMP, depression screen, sleep apnea screening; consider FDG-PET (posterior cingulate/precuneus hypometabolism) if needed.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Diagnosis disclosure, safety planning[/green] (driving, meds, finances), caregiver education, exercise and Mediterranean-style diet, vascular risk control.",
+      "- **First Line:** [green]Cognitive symptom therapy[/green] — **cholinesterase inhibitor** for mild–moderate AD; **memantine** for moderate–severe or add-on.",
+      "- **Gold Standard:** No cure; [green]multidisciplinary care[/green] (OT/PT, cognitive rehab, caregiver support). Consider **anti-amyloid monoclonals** only if **biomarker-positive**, appropriate stage, and monitoring feasible; [red]avoid anticholinergics and minimize sedatives[/red].",
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- **Amyloid-β** accumulation (plaques) and **tau** hyperphosphorylation (neurofibrillary tangles) drive synaptic dysfunction and neurodegeneration.",
+      "- Spread follows a **Braak-like trajectory** from transentorhinal/hippocampal regions to association cortices—explains memory-first symptoms.",
+      "- [blue]Hippocampal circuit failure[/blue] → impaired encoding/consolidation → **poor delayed recall** with minimal cueing improvement.",
+      "- Network loss yields **mesial temporal atrophy** on MRI and posterior cingulate/precuneus hypometabolism on FDG-PET.",
+      "**6️⃣ Symptoms — Clinical Presentation map**",
+      "- **Forgetting recent events / repeating questions** 📝 → storage (encoding) failure in hippocampus.",
+      "- **Poor cueing benefit** 🧩 → true amnestic deficit, not just retrieval.",
+      "- **Topographical disorientation** 🗺️ → parahippocampal/retrosplenial involvement.",
+      "- **Word-finding pauses** 💬 (mild, early) with intact grammar → secondary to memory/semantic access strain, not primary aphasia.",
+      "- **Relatively preserved behavior early** 🙂 → contrasts with bvFTD; **no early hallucinations/parkinsonism** → contrasts with DLB.",
+      "- [purple]Think AD when you see:[/purple] ==gradual amnestic decline + poor cueing + hippocampal atrophy==.",
     ],
   },
   {
-    id: "AD-1005",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Easy",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 76-year-old retired librarian presents with a 2-year history of increasing memory difficulties, forgetting where she parked her car and names of new acquaintances. She remains independent in daily activities. Her MMSE score is 27/30, and MoCA is 22/30, with deficits in delayed recall. Blood tests (thyroid, B12, folate) are normal. Which SINGLE management option is most appropriate for her suspected mild cognitive impairment progressing to Alzheimer’s disease?",
-    options: [
-      { key: "A", text: "Initiate memantine to prevent progression" },
-      { key: "B", text: "Start donepezil to treat early Alzheimer’s disease" },
-      {
-        key: "C",
-        text: "Recommend observation with follow-up cognitive testing",
-      }, // correct
-      { key: "D", text: "Prescribe lorazepam for memory-related anxiety" },
-      { key: "E", text: "Order lumbar puncture for CSF biomarkers" },
-    ],
-    correct: "C",
-    explanation_detail: [
-      "First principles: Mild cognitive impairment (MCI) with amnestic features (MoCA <26, MMSE ≥24) is often prodromal to AD. Observation with serial cognitive testing (e.g., MoCA every 6-12 months) monitors progression (10-15% annual conversion rate).",
-      "Management considerations: Lifestyle interventions (e.g., exercise, Mediterranean diet) reduce progression risk. Cholinesterase inhibitors are not FDA-approved for MCI.",
-      "Why not others: Memantine (A) is for moderate-severe AD. Donepezil (B) lacks strong evidence in MCI. Lorazepam (D) worsens cognition. CSF biomarkers (E) are unnecessary unless diagnostic uncertainty exists.",
-    ],
-  },
-  {
-    id: "AD-1006",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "An 80-year-old former engineer with a 10-year history of Alzheimer’s disease is nonverbal, incontinent, and fully dependent on caregivers for all ADLs. He has recurrent urinary tract infections and a pressure ulcer. His MMSE score is 3/30. Brain MRI shows severe global atrophy. He is on donepezil 10 mg and memantine 10 mg twice daily. Which SINGLE management option is most appropriate to address his severe Alzheimer’s disease and caregiver burden?",
-    options: [
-      { key: "A", text: "Increase donepezil dose to improve cognition" },
-      {
-        key: "B",
-        text: "Refer caregiver to support group and assess for palliative care",
-      }, // correct
-      { key: "C", text: "Start a high-dose antipsychotic for agitation" },
-      { key: "D", text: "Prescribe prophylactic antibiotics for UTIs" },
-      { key: "E", text: "Discontinue all AD medications" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "First principles: Severe AD (MMSE <10) focuses on palliative care and caregiver support. Support groups and respite care address caregiver burnout (60% prevalence). Palliative consultation optimizes symptom management (e.g., infections, ulcers).",
-      "Management considerations: Continue donepezil/memantine unless side effects outweigh benefits. Address UTIs and ulcers with targeted therapies (e.g., wound care, antibiotics as needed).",
-      "Why not others: Increasing donepezil (A) is futile in severe AD. Antipsychotics (C) are for severe, documented agitation. Prophylactic antibiotics (D) are not standard. Discontinuing medications (E) may worsen symptoms without clear indication.",
-    ],
-  },
-  {
-    id: "AD-1007",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 74-year-old woman presents with an 18-month history of progressive memory problems, repeating questions, and difficulty recalling conversations. Examination shows preserved motor function and normal gait. MoCA is 22/30 with impaired delayed recall. Brain MRI shows mild hippocampal atrophy. Which SINGLE feature of her clinical presentation is most characteristic of early Alzheimer’s disease rather than vascular dementia?",
-    options: [
-      { key: "A", text: "Hippocampal atrophy on MRI" },
-      {
-        key: "B",
-        text: "Absence of cardiovascular risk factors and stroke history",
-      }, // correct
-      { key: "C", text: "MoCA score of 22/30" },
-      { key: "D", text: "Family history of dementia" },
-      { key: "E", text: "Slow processing speed" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "First principles: Early AD presents with gradual memory loss, contrasting with vascular dementia’s (VaD) stepwise decline tied to strokes or vascular risk factors (e.g., hypertension). Absence of stroke history and vascular lesions on MRI favors AD.",
-      "Diagnostic considerations: AD shows hippocampal atrophy; VaD shows infarcts/white matter changes. Hachinski Ischemic Score (<4 for AD, >7 for VaD) aids differentiation.",
-      "Why not others: Hippocampal atrophy (A) can occur in VaD. MoCA 22/30 (C) is nonspecific. Family history (D) suggests AD risk but doesn’t rule out VaD. Slow processing (E) occurs in both.",
-    ],
-  },
-  {
-    id: "AD-1008",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 68-year-old man with a 2-year history of worsening memory, word-finding difficulty, and social withdrawal presents with occasional inappropriate comments. He requires assistance with complex tasks but performs basic ADLs independently. His MMSE score is 18/30, with deficits in memory and language. Brain MRI shows bilateral temporal lobe atrophy. Which SINGLE feature of his clinical presentation best distinguishes moderate Alzheimer’s disease from frontotemporal dementia?",
-    options: [
-      { key: "A", text: "MMSE score of 18/30" },
-      { key: "B", text: "Prominent memory and language deficits" }, // correct
-      { key: "C", text: "Absence of early personality changes" },
-      { key: "D", text: "Temporal lobe atrophy on MRI" },
-      { key: "E", text: "Lack of family history" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "First principles: Moderate AD (MMSE 10-20) features memory and language deficits due to temporoparietal pathology, while frontotemporal dementia (FTD) emphasizes early behavioral changes (behavioral variant) or isolated language deficits (PPA variants).",
-      "Diagnostic considerations: AD shows memory-predominant decline; FTD spares memory early. FDG-PET (temporoparietal vs. frontal hypometabolism) aids differentiation.",
-      "Why not others: MMSE 18/30 (A) is nonspecific. Mild behavioral changes (C) can occur in AD. Temporal atrophy (D) is seen in both. Lack of family history (E) doesn’t distinguish, as both can be sporadic.",
-    ],
-  },
-  {
-    id: "AD-1009",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 80-year-old woman presents with a 1.5-year history of forgetting recent events and misplacing items. She is independent in daily activities but struggles with appointments. Her MMSE score is 26/30, with deficits in delayed recall. Brain MRI shows mild hippocampal atrophy, and amyloid PET is positive. Which SINGLE pathophysiological mechanism drives her memory impairment in early Alzheimer’s disease?",
+    id: "AD-SIGNS-20003",
+    topic: "Geriatrics • Alzheimer’s disease — Signs (Examination Findings)",
+    difficulty: "Medium",
+    vignetteTitle: "What bedside signs point to amnestic Alzheimer’s disease?",
+    stem: "A 76-year-old former math teacher has 3 years of gradually progressive forgetfulness. On exam, she is oriented to person but misses the date and clinic location. Immediate registration is intact (3/3), but delayed recall at 5 minutes is 0/3 and improves only minimally with category cues. Category (animal) fluency is 8 in 60 seconds while letter (F) fluency is 12. She has mild constructional difficulty on clock drawing and intersecting pentagons. Naming is mostly intact with occasional circumlocutions. Neurological exam is otherwise nonfocal; gait is normal. Which set of **examination signs** best fits the underlying syndrome?",
     options: [
       {
         key: "A",
-        text: "Loss of dopaminergic neurons in the substantia nigra",
+        text: "Prominent disinhibition and utilization behavior; intact delayed recall with strong cueing benefit; frontal release signs early",
       },
       {
         key: "B",
-        text: "Accumulation of amyloid-beta plaques and tau tangles in the hippocampus",
-      }, // correct
-      { key: "C", text: "Chronic microvascular ischemia" },
-      { key: "D", text: "Autoimmune-mediated neuronal destruction" },
-      {
-        key: "E",
-        text: "Acetylcholine deficiency from basal ganglia dysfunction",
+        text: "Fluctuating attention, recurrent visual hallucinations, spontaneous parkinsonism, visuospatial neglect",
       },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "First principles: Early AD is driven by amyloid-beta plaques and tau neurofibrillary tangles in the hippocampus, causing synaptic dysfunction and neuronal loss, leading to memory impairment.",
-      "Pathophysiology considerations: Amyloid PET confirms amyloid pathology. Hippocampal involvement underlies episodic memory deficits. Cholinergic loss (nucleus basalis) is secondary.",
-      "Why not others: Dopaminergic loss (A) is for Parkinson’s. Microvascular ischemia (C) causes vascular dementia. Autoimmune destruction (D) is for encephalitis. Acetylcholine deficiency (E) is secondary and not basal ganglia-related.",
-    ],
-  },
-  {
-    id: "AD-1010",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 77-year-old man with a 3-year history of Alzheimer’s disease presents with worsening memory, disorientation, and new-onset agitation. He struggles to recognize family and needs help with dressing. His MMSE score is 16/30. Brain MRI shows temporal and parietal atrophy. He is on donepezil 10 mg daily. Which SINGLE pathophysiological process is most likely contributing to his agitation in moderate Alzheimer’s disease?",
-    options: [
-      { key: "A", text: "Dopamine depletion in the nigrostriatal pathway" },
-      {
-        key: "B",
-        text: "Neuroinflammation and neuronal loss in frontal and limbic regions",
-      }, // correct
-      { key: "C", text: "Hypoperfusion of the occipital cortex" },
-      { key: "D", text: "Autoimmune attack on glutamatergic neurons" },
-      { key: "E", text: "Mitochondrial dysfunction in the cerebellum" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "First principles: Agitation in moderate AD results from neuroinflammation and neuronal loss in frontal and limbic regions (e.g., amygdala, prefrontal cortex), disrupting emotional regulation.",
-      "Pathophysiology considerations: Amyloid/tau pathology spreads to frontal/limbic areas, causing behavioral symptoms (BPSD). Microglial activation exacerbates inflammation.",
-      "Why not others: Dopamine depletion (A) is for Parkinson’s. Occipital hypoperfusion (C) is for PCA-AD or vascular dementia. Autoimmune attack (D) is for encephalitis. Cerebellar dysfunction (E) is irrelevant, as AD spares the cerebellum.",
-    ],
-  },
-  {
-    id: "AD-1011",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "An 83-year-old woman with a 9-year history of Alzheimer’s disease is nonverbal, incontinent, and fully dependent on caregivers for all activities of daily living, including feeding and mobility. Her MMSE score is 4/30. She has developed recurrent aspiration pneumonia. Brain MRI shows severe global cortical atrophy. She is on donepezil 10 mg and memantine 10 mg twice daily. Which SINGLE pathophysiological mechanism underlies the severe functional decline and aspiration risk in this patient’s advanced Alzheimer’s disease?",
-    options: [
-      { key: "A", text: "Degeneration of motor neurons in the spinal cord" },
-      {
-        key: "B",
-        text: "Extensive neuronal loss and synaptic failure across cortical and subcortical regions",
-      }, // correct
-      { key: "C", text: "Primary vascular damage to the brainstem" },
-      { key: "D", text: "Loss of GABAergic neurons in the thalamus" },
-      { key: "E", text: "Amyloid deposition confined to the cerebellum" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "First principles: Severe Alzheimer’s disease (AD) is characterized by extensive neuronal loss and synaptic failure due to amyloid-beta plaques and tau neurofibrillary tangles spreading across cortical (e.g., frontal, temporal, parietal) and subcortical (e.g., hippocampus, basal forebrain) regions. This widespread neurodegeneration disrupts neural networks critical for cognition, language, and motor coordination. In advanced stages, involvement of brainstem nuclei (e.g., nucleus ambiguus) impairs swallowing, increasing aspiration pneumonia risk, a leading cause of death in severe AD, affecting ~50% of patients.",
-      "Pathophysiology considerations: Global cortical atrophy on MRI reflects profound neuronal loss. Amyloid-beta aggregates disrupt synaptic function, while tau tangles impair axonal transport, leading to cell death. Swallowing dysfunction arises from degeneration in the medulla’s swallowing centers, compounded by cortical input loss. Recurrent pneumonia and dependency in ADLs (e.g., feeding, mobility) indicate end-stage disease (FAST stage 7). Amyloid PET or CSF biomarkers (low Aβ42, high tau) confirm AD pathology earlier, but in severe stages, clinical and imaging findings suffice for diagnosis.",
-      "Why not others: Motor neuron degeneration (A) is characteristic of amyotrophic lateral sclerosis, not AD, which spares spinal motor neurons. Vascular brainstem damage (C) occurs in stroke, not AD; this patient’s MRI shows no vascular lesions. GABAergic thalamic loss (D) is minimal in AD and unrelated to aspiration or ADL dependence. Amyloid deposition in the cerebellum (E) is not a feature of AD, which primarily affects cortical/hippocampal regions, sparing the cerebellum.",
-    ],
-  },
-  {
-    id: "AD-1012",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 60-year-old former journalist presents with a 2-year history of difficulty finding words and organizing thoughts when writing. He struggles with recalling names of objects but has relatively preserved recent memory. He remains independent in daily activities. His MMSE score is 28/30, with deficits in language tasks. Brain MRI shows mild left temporal lobe atrophy, and amyloid PET is positive. Family history includes a mother with dementia at age 62. Which SINGLE pathophysiological mechanism causes the language deficits in this patient’s early-onset Alzheimer’s disease?",
-    options: [
-      {
-        key: "A",
-        text: "Selective degeneration of dopaminergic neurons in the basal ganglia",
-      },
-      {
-        key: "B",
-        text: "Amyloid-beta and tau pathology in the left temporal and parietal lobes",
-      }, // correct
-      { key: "C", text: "Chronic hypoperfusion of the frontal cortex" },
-      {
-        key: "D",
-        text: "Mitochondrial dysfunction primarily affecting the occipital lobe",
-      },
-      { key: "E", text: "Loss of serotonergic neurons in the raphe nuclei" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "First principles: Early-onset Alzheimer’s disease (EOAD) with language deficits, as in the logopenic variant, is driven by amyloid-beta plaques and tau neurofibrillary tangles in the left temporal and parietal lobes (e.g., Wernicke’s area, angular gyrus). These aggregates cause synaptic dysfunction and neuronal loss, disrupting language networks responsible for word retrieval and sentence processing. The logopenic variant is characterized by word-finding difficulties and impaired repetition, distinguishing it from amnestic AD, which primarily affects memory.",
-      "Pathophysiology considerations: Amyloid PET positivity confirms AD pathology. Left temporal/parietal atrophy on MRI correlates with language impairment. Tau pathology predominates in logopenic AD, affecting posterior language areas. EOAD (onset <65) often has a genetic component (e.g., PSEN1 mutations), as suggested by the family history. Cholinergic deficits in the nucleus basalis of Meynert contribute secondarily to cognitive decline. The prevalence of logopenic AD is ~15-20% of EOAD cases, requiring targeted diagnosis via biomarkers or imaging.",
-      "Why not others: Dopaminergic degeneration (A) occurs in Parkinson’s disease, causing motor symptoms, not language deficits. Frontal hypoperfusion (C) is associated with vascular dementia or frontotemporal dementia, not AD; this patient has no vascular risk factors. Mitochondrial dysfunction in the occipital lobe (D) is relevant to posterior cortical atrophy AD, not language deficits. Serotonergic loss in the raphe nuclei (E) affects mood, not language, and is not a primary AD feature.",
-    ],
-  },
-  {
-    id: "AD-1013",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Easy",
-    vignetteTitle: "Clinic Vignette",
-    stem: "An 81-year-old retired nurse presents with a 1-year history of difficulty remembering names of new people and occasionally forgetting where she placed her keys. She remains independent in daily activities, such as cooking and driving, but takes longer to complete tasks. Her MMSE score is 28/30, with mild deficits in delayed recall. Brain MRI shows subtle hippocampal atrophy. She has a family history of dementia. Which SINGLE clinical feature is most characteristic of early Alzheimer’s disease in this patient?",
-    options: [
-      { key: "A", text: "Prominent motor slowing and rigidity" },
-      {
-        key: "B",
-        text: "Gradual memory impairment, particularly for recent events",
-      }, // correct
       {
         key: "C",
-        text: "Sudden onset of confusion with visual hallucinations",
+        text: "Magnetic gait with start hesitation, urinary urgency/incontinence, impaired attention/processing speed; ventriculomegaly on imaging",
       },
       {
         key: "D",
-        text: "Early loss of language fluency and word-finding difficulty",
+        text: "Poor delayed recall with minimal cueing benefit; semantic (category) fluency worse than phonemic; constructional apraxia on clock/pentagons; otherwise nonfocal neuro exam",
       },
-      { key: "E", text: "Severe apathy and social disinhibition" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "First principles: Early Alzheimer’s disease (AD) is characterized by gradual memory impairment, particularly for recent events (episodic memory), due to amyloid-beta and tau pathology in the hippocampus and entorhinal cortex. Patients often forget conversations, misplace items, or rely on reminders, yet maintain independence in daily activities, as seen in mild cognitive impairment (MCI) or early AD. This is distinct from other dementias with different clinical patterns.",
-      "Clinical considerations: MMSE scores of 26-30 or MoCA <26 indicate early AD or MCI. Subtle hippocampal atrophy on MRI supports AD pathology. Family history increases genetic risk (e.g., APOE ε4), present in ~40% of AD patients. Differential diagnosis includes vascular dementia (stepwise decline, vascular lesions), Lewy body dementia (hallucinations, parkinsonism), and frontotemporal dementia (behavioral/language changes). Non-pharmacologic strategies (e.g., cognitive training) and cholinesterase inhibitors are considered if AD is confirmed.",
-      "Why not others: Motor slowing and rigidity (A) are features of Parkinson’s or Lewy body dementia, not AD. Sudden confusion with hallucinations (C) suggests delirium or Lewy body dementia, not AD’s gradual onset. Early language deficits (D) are typical of logopenic AD or primary progressive aphasia, not amnestic AD. Severe apathy and disinhibition (E) indicate frontotemporal dementia, not early AD, where behavioral changes are minimal.",
-    ],
-  },
-  {
-    id: "AD-1014",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 79-year-old man with a 4-year history of Alzheimer’s disease presents with worsening memory and difficulty managing finances. He requires assistance with dressing but can eat independently. His wife reports evening agitation and occasional wandering. His MMSE score is 17/30, with deficits in orientation and recall. Brain MRI shows temporal and parietal atrophy. He is on donepezil 10 mg daily. Which SINGLE clinical feature best indicates progression to moderate Alzheimer’s disease?",
-    options: [
-      { key: "A", text: "Visual hallucinations and fluctuating cognition" },
       {
-        key: "B",
-        text: "Dependence on assistance for complex activities like finances and dressing",
-      }, // correct
-      { key: "C", text: "Prominent tremor and bradykinesia" },
-      { key: "D", text: "Acute memory loss following a recent stroke" },
-      { key: "E", text: "Complete inability to communicate or ambulate" },
+        key: "E",
+        text: "Nonfluent agrammatic speech with apraxia of speech; effortful output; left inferior frontal signs",
+      },
     ],
-    correct: "B",
+    correct: "D",
     explanation_detail: [
-      "First principles: Moderate Alzheimer’s disease (AD, MMSE 10-20) is marked by increased dependence in complex activities of daily living (ADLs) like finances and dressing due to amyloid/tau pathology spreading to parietal and frontal lobes. Behavioral and psychological symptoms (BPSD), such as agitation and wandering, emerge in ~50% of patients, reflecting limbic/frontal dysfunction. This progression distinguishes moderate from early AD, where independence is preserved.",
-      "Clinical considerations: Temporal/parietal atrophy on MRI correlates with cognitive and functional decline. Wandering, seen in 20-40% of moderate AD patients, poses safety risks, necessitating interventions like ID bracelets or door alarms. Differential diagnosis includes Lewy body dementia (hallucinations, parkinsonism) and vascular dementia (stroke-related deficits). Adding memantine to donepezil and non-pharmacologic strategies (e.g., structured routines) manages BPSD and slows decline.",
-      "Why not others: Hallucinations and fluctuating cognition (A) are typical of Lewy body dementia, not AD. Tremor and bradykinesia (C) indicate Parkinson’s or related disorders. Acute memory loss post-stroke (D) suggests vascular dementia, not AD’s gradual progression. Complete inability to communicate/ambulate (E) indicates severe AD (MMSE <10), not moderate.",
+      "**1️⃣ Why it is the correct answer**",
+      "- **Amnestic Alzheimer’s disease (AD)** shows **hippocampal storage failure** → **poor delayed recall** that **does not normalize with cues**.",
+      "- **Semantic (category) fluency < phonemic (letter) fluency** is typical early as temporal semantic networks are affected.",
+      "- **Constructional apraxia** on **clock drawing**/intersecting pentagons reflects early visuospatial network involvement.",
+      "- General neuro exam is **nonfocal** early; gait usually normal until late. [yellow]Pattern lock: memory-first + poor cueing + constructional errors = AD[/yellow].",
+      "- Imaging often reveals [blue]medial temporal (hippocampal) atrophy[/blue], aligning with these signs. 🧠🕒",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A (bvFTD signs):** Early **behavioral disinhibition/utilization** with **intact episodic storage** and good cueing benefit → frontal syndrome, not amnestic AD.",
+      "- **B (DLB signs):** **Fluctuations**, **visual hallucinations**, **parkinsonism**, and marked visuospatial neglect define DLB—absent here.",
+      "- **C (NPH signs):** **Magnetic gait** and urinary symptoms dominate with subcortical slowing; exam and vignette lack gait/continence issues.",
+      "- **E (nfvPPA signs):** **Nonfluent agrammatic speech** with apraxia of speech localizes to left IFG/insular networks—language output, not memory, is primary.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Bedside cognitive screen (MoCA/MMSE) with emphasis on **delayed recall** and **cueing**. **Confirms?** ❌ Suggests AD when cueing fails.",
+      "- **Next Diagnostic step:** 🧠 **MRI brain** → [blue]hippocampal/mesial temporal atrophy[/blue]; exclude structural mimics. **Confirms?** ➕ Supports AD pattern.",
+      "- **Best Diagnostic Step (biomarker confirmation):** **CSF AD profile** (↓Aβ42/42–40, ↑p-tau, ↑t-tau) **or** **amyloid PET** ± **tau PET**. **Confirms?** ✅ Biomarker-consistent AD.",
+      "- **Adjuncts:** Labs (TSH/B12/CMP/CBC), depression screen, sleep study if OSA suspected; FDG-PET (posterior cingulate/precuneus hypometabolism) if needed.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Diagnosis disclosure and safety planning[/green] (driving, meds, finances), caregiver education, exercise, Mediterranean-style diet, vascular risk control.",
+      "- **First Line:** [green]Cholinesterase inhibitor** for mild–moderate AD; **memantine** for moderate–severe or add-on[/green]; cognitive rehab, routines, environmental supports.",
+      "- **Gold Standard:** No cure; [green]multidisciplinary care[/green]. Consider **anti-amyloid monoclonals** only if **biomarker-positive** and appropriate for risks/monitoring; [red]minimize anticholinergics/sedatives[/red].",
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- **Aβ plaques** and **tau tangles** disrupt hippocampal circuits, causing **encoding/consolidation failure** → hallmark **poor delayed recall**.",
+      "- Spread from **transentorhinal/hippocampal** regions to association cortices yields **constructional apraxia** and semantic fluency decline.",
+      "- Network loss appears as **mesial temporal atrophy** on MRI and posterior cingulate/precuneus hypometabolism on FDG-PET.",
+      "**6️⃣ Signs — Examination Findings map**",
+      "- **Poor delayed recall with minimal cueing benefit** 🧩 → hippocampal storage failure.",
+      "- **Category fluency < letter fluency** 🐶 < F-words → semantic network early hit.",
+      "- **Constructional apraxia** 🕒🔺 → clock/pentagon errors from parietal–temporal network spread.",
+      "- **Anomia (mild) with circumlocutions** 💬 → secondary naming strain; grammar intact early.",
+      "- **Nonfocal neuro exam; normal gait early** 🚶 → contrasts with NPH/DLB.",
+      "- [purple]Think AD when the bedside exam shows:[/purple] ==poor recall + poor cueing + semantic fluency drop + constructional errors==",
     ],
   },
   {
-    id: "AD-1015",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "An 86-year-old woman with an 8-year history of Alzheimer’s disease is nonverbal, incontinent, and fully dependent on caregivers for all ADLs, including feeding. She has had two episodes of aspiration pneumonia in the past year. Her MMSE score is 5/30. Brain MRI shows severe global atrophy. She is on donepezil 10 mg and memantine 10 mg twice daily. Which SINGLE clinical feature is most indicative of severe Alzheimer’s disease in this patient?",
+    id: "AD-REDFLAGS-20004",
+    topic: "Geriatrics • Alzheimer’s disease — Red Flags",
+    difficulty: "Medium",
+    vignetteTitle: "When it's not typical Alzheimer’s: spot the red flags",
+    stem: "A 73-year-old woman is referred with 4 months of rapidly worsening memory and attention. Family reports new daily headaches, a witnessed focal seizure last week, and low-grade fevers. She has intermittent confusion and drowsiness through the day. Exam: disoriented, mild right arm drift, and neck stiffness; fundoscopy suggests papilledema. Which feature set signals a RED FLAG that requires urgent re-evaluation rather than a standard Alzheimer’s workup?",
     options: [
       {
         key: "A",
-        text: "Mild forgetfulness for recent events with preserved ADLs",
+        text: "3-year gradual episodic memory decline with poor cueing and hippocampal atrophy on MRI",
       },
       {
         key: "B",
-        text: "Prominent language deficits with intact social behavior",
+        text: "Early visual hallucinations, cognitive fluctuations, and spontaneous parkinsonism without fever",
       },
       {
         key: "C",
-        text: "Complete dependence on caregivers for all ADLs and nonverbal status",
-      }, // correct
-      { key: "D", text: "Early executive dysfunction with preserved memory" },
+        text: "Subacute (weeks–months) decline with headache, fever, seizure, and papilledema",
+      },
+      {
+        key: "D",
+        text: "Slowly progressive forgetfulness over 2 years with normal neuro exam and negative depression screen",
+      },
       {
         key: "E",
-        text: "Visual hallucinations and REM sleep behavior disorder",
+        text: "Mild amnestic complaints with stable function and normal neuro exam for 18 months",
       },
     ],
     correct: "C",
     explanation_detail: [
-      "First principles: Severe Alzheimer’s disease (AD, MMSE <10) is characterized by complete dependence on caregivers for all ADLs (e.g., feeding, toileting) and loss of meaningful communication (nonverbal or single words) due to widespread neuronal loss from amyloid/tau pathology affecting cortical and subcortical regions. Complications like aspiration pneumonia, seen in ~50% of severe AD patients, result from swallowing dysfunction due to brainstem/cortical degeneration.",
-      "Clinical considerations: Global atrophy on MRI reflects end-stage neurodegeneration. Aspiration pneumonia is a leading cause of mortality, necessitating swallowing assessments by speech therapists. Differential diagnosis includes severe Lewy body dementia (hallucinations, parkinsonism) or vascular dementia (vascular lesions). Palliative care focuses on comfort, with continuation of donepezil/memantine unless side effects predominate. Caregiver support is critical, as burnout affects ~60% of caregivers.",
-      "Why not others: Mild forgetfulness with preserved ADLs (A) indicates MCI or early AD, not severe. Language deficits with intact behavior (B) suggest primary progressive aphasia, not classic severe AD. Early executive dysfunction (D) is typical of frontotemporal dementia or atypical AD. Hallucinations and REM sleep behavior disorder (E) are features of Lewy body dementia, not severe AD.",
+      "**1️⃣ Why it is the correct answer**",
+      "- **Rapid/subacute time course (weeks–months)** is atypical for Alzheimer’s, which evolves over years.",
+      "- **Systemic/inflammatory signs** like **fever** and **headache** point toward infectious, inflammatory, or neoplastic CNS disease.",
+      "- **Early seizures** and **papilledema** imply cortical irritability and raised intracranial pressure—[red]urgent imaging and CSF workup are mandatory[/red].",
+      "- These features fit **encephalitis, abscess, tumor, venous thrombosis, vasculitis, or CAA-related inflammation**, not typical AD.",
+      "- [yellow]Safety pearl:[/yellow] When the clock speeds up and the body is “hot,” think **not Alzheimer’s**. 🚨",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A:** Classic **amnestic AD** pattern (years-long decline + hippocampal atrophy) → not a red-flag scenario.",
+      "- **B:** Suggests **Lewy body dementia** (DLB) rather than AD, but without fever/ICP/seizure it’s not an **urgent** red flag—it's an alternative neurodegenerative dx.",
+      "- **D:** Slow progression with benign exam fits routine cognitive clinic evaluation, not emergency workup.",
+      "- **E:** Mild, stable subjective complaints without objective decline → consider MCI/monitoring; no urgent red flags.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** [red]Stabilize ABCs[/red]; check glucose; focused neuro exam. **Confirms?** ❌ Safety first.",
+      "- **Next Diagnostic step:** **Urgent non-contrast CT head** (rule out bleed/mass) → proceed to **MRI brain with and without contrast** ± **MRV** if venous thrombosis suspected. **Confirms?** ➕ Identifies structural/inflammatory causes.",
+      "- **Best Diagnostic Step:** **Lumbar puncture** after imaging excludes mass effect → CSF cell count, protein/glucose, cultures, **HSV/VZV PCR**, autoimmune encephalitis panel; **EEG** for seizures/encephalopathy. **Confirms?** ✅ Etiologic diagnosis.",
+      "- **Adjuncts:** CBC, CMP, ESR/CRP, blood cultures; autoimmune/vasculitis serologies; consider **CTA/CTV** if vascular concern.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Seizure control[/green] (benzodiazepine → levetiracetam), head elevation, analgesia, antipyretics, DVT prophylaxis as appropriate.",
+      "- **First Line (empiric while pending tests):** Start **IV acyclovir** if encephalitis suspected; add **broad-spectrum antibiotics** if bacterial meningitis/abscess possible; manage ICP (e.g., mannitol/hypertonic saline per protocol).",
+      "- **Gold Standard:** **Cause-specific therapy** once confirmed (antivirals/antibiotics, immunotherapy for autoimmune encephalitis, anticoagulation for CVST, neurosurgical management for mass/abscess).",
+      "**5️⃣ Full Pathophysiology Explained (why these are red flags)**",
+      "- **Alzheimer’s** is a **slow neurodegenerative** process (Aβ plaques, tau tangles) without early fever, seizures, or raised ICP.",
+      "- **Infectious/autoimmune/neoplastic** processes cause **inflammation, edema, mass effect**, and **cortical hyperexcitability** → headaches, fever, seizures, papilledema.",
+      "- **Time course matters:** **weeks–months** = inflammatory/neoplastic; **years** = degenerative.",
+      "- [purple]Mnemonic:[/purple] “**FAST + HOT + ELECTRIC + PRESSURE**” → Fast decline, fever, seizures, papilledema = **not AD**.",
+      "**6️⃣ Red-flag checklist — shift to urgent workup when you see…**",
+      "- **Acute/subacute onset** or **stepwise** decline.",
+      "- **Fever, new headache, meningism**, or **systemic illness** (weight loss, night sweats).",
+      "- **Seizures**, **papilledema**, or new **focal deficits**.",
+      "- **Rapidly fluctuating consciousness** or delirium out of proportion.",
+      "- **Cancer/immunosuppression**, **anticoagulation/trauma**, or signs of **vasculitis/CNS infection**.",
+      "- [blue]If any present → abandon routine AD pathway and pursue **acute neurology/infectious/oncology** algorithms immediately[/blue].",
     ],
   },
   {
-    id: "AD-1016",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 61-year-old graphic designer presents with a 2-year history of difficulty with spatial tasks, such as drawing layouts or navigating familiar routes. Her memory for recent events is relatively intact. She remains independent in most ADLs. Her MMSE score is 27/30, with deficits in visuospatial tasks. Brain MRI shows parietal and occipital atrophy, and amyloid PET is positive. Family history includes a father with dementia at age 60. Which SINGLE clinical feature best characterizes the presentation of this patient’s early-onset Alzheimer’s disease?",
+    id: "AD-DDX-20005",
+    topic: "Geriatrics • Alzheimer’s disease — Differential Diagnosis",
+    difficulty: "Medium",
+    vignetteTitle: "Parsing the differentials in an amnestic dementia",
+    stem: "A 74-year-old retired pharmacist has 3 years of gradually progressive forgetfulness. Family reports repeated questions, misplacing items, getting lost on familiar routes, and difficulty recalling recent conversations despite intact attention. Language is fluent with mild word-finding pauses; behavior and sleep are unremarkable. Exam: poor delayed recall with minimal cueing benefit; mild constructional errors. MRI shows bilateral hippocampal/mesial temporal atrophy with relative sparing of frontal lobes. Which diagnosis best explains this presentation?",
     options: [
-      {
-        key: "A",
-        text: "Prominent visuospatial impairment with relatively spared memory",
-      }, // correct
-      { key: "B", text: "Severe apathy and personality changes" },
-      {
-        key: "C",
-        text: "Acute onset of memory loss with focal neurological signs",
-      },
-      { key: "D", text: "Complete dependence on others for basic ADLs" },
-      { key: "E", text: "Fluctuating cognition with parkinsonism" },
-    ],
-    correct: "A",
-    explanation_detail: [
-      "🌟 **First principles**: Early-onset Alzheimer’s disease (EOAD, onset <65) can present with atypical features, such as the posterior cortical atrophy (PCA) variant, characterized by prominent visuospatial impairment (e.g., difficulty with drawing, navigation) due to amyloid-beta and tau pathology in parietal and occipital lobes. Unlike classic AD, memory is relatively spared early on, making PCA distinct. This variant affects ~5-10% of AD cases and is often misdiagnosed as a visual or psychiatric disorder initially.",
-      "🧠 **Clinical considerations**: The MMSE score of 27/30 is typical in early PCA-AD, with deficits in visuospatial tasks (e.g., clock-drawing test). MRI showing parietal/occipital atrophy and positive amyloid PET confirm AD pathology. Family history (father with dementia at 60) suggests genetic risk, such as PSEN1 mutations, present in ~50% of familial EOAD cases. Differential diagnoses include corticobasal degeneration (asymmetric motor signs), Lewy body dementia (hallucinations, parkinsonism), and vascular dementia (stroke-related deficits). Management includes cholinesterase inhibitors (e.g., donepezil) and occupational therapy for visuospatial deficits.",
-      "❌ **Why not others**: Severe apathy and personality changes (B) are hallmarks of frontotemporal dementia (FTD), not PCA-AD. Acute memory loss with focal signs (C) suggests vascular dementia, not the gradual onset of AD. Complete ADL dependence (D) indicates severe AD, not early-stage. Fluctuating cognition and parkinsonism (E) are features of Lewy body dementia, not PCA-AD.",
-    ],
-  },
-  {
-    id: "AD-1017",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 75-year-old woman with a 3-year history of Alzheimer’s disease presents with worsening difficulty finding words and understanding complex instructions. She needs help with household tasks like cooking but can manage personal hygiene. Her MMSE score is 19/30, with deficits in language and memory. Brain MRI shows left temporal and parietal atrophy. She is on donepezil 10 mg daily. Which SINGLE clinical feature is most indicative of the progression of this patient’s moderate Alzheimer’s disease?",
-    options: [
-      {
-        key: "A",
-        text: "Prominent word-finding difficulty and impaired comprehension",
-      }, // correct
-      { key: "B", text: "Severe motor impairment with gait instability" },
-      {
-        key: "C",
-        text: "Sudden onset of delusions and auditory hallucinations",
-      },
-      { key: "D", text: "Early memory loss with preserved language function" },
-      { key: "E", text: "Complete loss of ambulation and communication" },
-    ],
-    correct: "A",
-    explanation_detail: [
-      "🌟 **First principles**: Moderate Alzheimer’s disease (AD, MMSE 10-20) shows progression of cognitive deficits beyond memory to include language difficulties, particularly in the logopenic variant, due to tau-predominant pathology in the left temporal and parietal lobes. Word-finding difficulty and impaired comprehension (e.g., trouble with complex sentences) reflect disruption of language networks, affecting ~15-20% of AD patients in this stage. This contrasts with early AD’s memory-predominant presentation.",
-      "🧠 **Clinical considerations**: Left temporal/parietal atrophy on MRI correlates with language deficits. The MMSE score of 19/30 indicates moderate AD, with increasing dependence on complex ADLs (e.g., cooking). Differential diagnoses include semantic primary progressive aphasia (FTD variant, with loss of word meaning) and vascular dementia (stepwise decline, vascular lesions). Management involves adding memantine to donepezil for synergistic effects and speech therapy to support communication. Non-pharmacologic strategies (e.g., simplified communication) reduce frustration. Approximately 30% of moderate AD patients develop behavioral symptoms, necessitating monitoring.",
-      "❌ **Why not others**: Severe motor impairment (B) suggests Parkinson’s or progressive supranuclear palsy, not AD. Sudden delusions and hallucinations (C) indicate delirium or Lewy body dementia, not AD’s gradual progression. Early memory loss with preserved language (D) is typical of early amnestic AD, not moderate logopenic AD. Complete loss of ambulation/communication (E) indicates severe AD (MMSE <10), not moderate.",
-    ],
-  },
-  {
-    id: "AD-1018",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 78-year-old woman presents with a 1-year history of forgetting recent conversations and misplacing items like her phone. She is independent in daily activities but relies on lists for reminders. Her MMSE score is 27/30, with deficits in short-term recall. Brain MRI shows mild hippocampal atrophy, and amyloid PET is positive. She has no history of stroke or vascular risk factors. Her mother and sister had dementia in their 70s. Which SINGLE etiological factor is most likely contributing to this patient’s early Alzheimer’s disease?",
-    options: [
-      {
-        key: "A",
-        text: "Chronic traumatic brain injury from repeated head trauma",
-      },
-      {
-        key: "B",
-        text: "Genetic predisposition involving APOE ε4 allele or familial mutations",
-      }, // correct
-      {
-        key: "C",
-        text: "Chronic cerebral hypoperfusion from untreated hypertension",
-      },
-      { key: "D", text: "Autoimmune-mediated neuronal damage" },
-      { key: "E", text: "Long-term exposure to heavy metals like lead" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Alzheimer’s disease (AD) etiology involves a combination of genetic and environmental factors, with genetic predisposition being a primary driver in cases with family history. The APOE ε4 allele, present in ~40% of AD patients, increases risk 3-15-fold, promoting amyloid-beta accumulation. Familial AD, caused by autosomal dominant mutations in PSEN1, PSEN2, or APP genes, is rare (<1%) but more common in early-onset or familial cases. These mutations enhance amyloid production, leading to early plaque formation.",
-      "🧬 **Etiology considerations**: The patient’s family history (mother and sister with dementia) strongly suggests a genetic predisposition, likely APOE ε4 or, less commonly, PSEN1/PSEN2/APP mutations. Amyloid PET positivity confirms amyloid pathology, and hippocampal atrophy supports early AD. The absence of vascular risk factors or trauma rules out other causes. Genetic counseling is recommended, as familial AD has a 50% inheritance risk in mutation carriers. Lifestyle factors (e.g., low education, obesity) may amplify genetic risk but are secondary. Prevalence of APOE ε4 in sporadic AD is ~25% in the general population vs. 60% in AD patients.",
-      "❌ **Why not others**: Chronic traumatic brain injury (A) increases AD risk but requires a trauma history, absent here. Cerebral hypoperfusion (C) causes vascular dementia, not AD; no hypertension or vascular lesions are noted. Autoimmune neuronal damage (D) is seen in encephalitis, not AD’s neurodegenerative process. Heavy metal exposure (E) like lead lacks strong evidence as a primary AD cause compared to genetic factors.",
-    ],
-  },
-  {
-    id: "AD-1019",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 76-year-old man presents with a 3-year history of worsening memory and difficulty managing finances. He requires assistance with dressing and has occasional agitation. His MMSE score is 18/30, with deficits in memory and executive function. Brain MRI shows temporal and parietal atrophy. He has no family history of dementia and no significant vascular risk factors. He is on donepezil 10 mg daily. Which SINGLE etiological factor is most likely for this patient’s moderate Alzheimer’s disease?",
-    options: [
-      {
-        key: "A",
-        text: "Sporadic amyloid-beta accumulation influenced by aging and environmental factors",
-      }, // correct
-      { key: "B", text: "Repeated ischemic strokes causing cortical infarcts" },
-      { key: "C", text: "Chronic alcohol abuse leading to neuronal loss" },
+      { key: "A", text: "Alzheimer’s disease (amnestic presentation)" },
+      { key: "B", text: "Dementia with Lewy bodies (DLB)" },
+      { key: "C", text: "Behavioral-variant frontotemporal dementia (bvFTD)" },
       {
         key: "D",
-        text: "Mitochondrial DNA mutations causing oxidative stress",
+        text: "Vascular dementia (multi-infarct or small-vessel disease)",
       },
-      { key: "E", text: "Viral infection triggering neuroinflammation" },
+      {
+        key: "E",
+        text: "Major depressive disorder with cognitive impairment (pseudodementia)",
+      },
     ],
     correct: "A",
     explanation_detail: [
-      "🌟 **First principles**: Sporadic Alzheimer’s disease (AD), accounting for >95% of cases, is driven by amyloid-beta accumulation and tau pathology, exacerbated by aging—the strongest risk factor—and environmental factors (e.g., low education, sedentary lifestyle). These lead to synaptic dysfunction and neuronal loss, particularly in temporoparietal regions, causing cognitive and functional decline. Sporadic AD typically presents after age 65, unlike familial AD, which is genetically driven.",
-      "🧬 **Etiology considerations**: The absence of family history and vascular risk factors, combined with temporal/parietal atrophy and memory/executive deficits, supports sporadic AD. Aging increases amyloid clearance failure, with prevalence rising from 3% at age 65 to 32% at age 85. Environmental factors like low cognitive reserve or obesity amplify risk, though not specified here. Amyloid PET or CSF biomarkers (low Aβ42, high tau) would confirm pathology. Differential diagnoses include vascular dementia (stroke-related) and alcohol-related dementia, ruled out by history and imaging. Management includes donepezil, with memantine added for moderate AD.",
-      "❌ **Why not others**: Ischemic strokes (B) cause vascular dementia, not AD; no infarcts or vascular risk factors are noted. Chronic alcohol abuse (C) leads to alcohol-related dementia, absent in this patient’s history. Mitochondrial mutations (D) contribute secondarily to oxidative stress but are not the primary etiology. Viral infections (E) are hypothesized but lack strong evidence compared to amyloid/tau pathology.",
+      "**1️⃣ Why it is the correct answer**",
+      "- **Gradual, insidious episodic memory decline** with poor cueing benefit points to a **storage** (hippocampal) problem characteristic of AD.",
+      "- MRI pattern of [blue]**hippocampal/mesial temporal atrophy**[/blue] matches amnestic Alzheimer’s; frontal lobes relatively spared early.",
+      "- **Navigation problems** and **repetition of questions** reflect impaired consolidation in hippocampal networks.",
+      "- Relative preservation of early **behavior**, **sleep**, and **parkinsonism** makes FTD/DLB less likely.",
+      "- [yellow]Pattern lock:[/yellow] memory-first decline + poor cueing + hippocampal atrophy = **Alzheimer’s** 🧠📉",
+      "**2️⃣ Why the other options are wrong**",
+      "- **B (DLB):** Core features are **visual hallucinations**, **cognitive fluctuations**, **spontaneous parkinsonism**, and **REM sleep behavior disorder**—absent here; hippocampal atrophy is not the dominant early imaging pattern.",
+      "- **C (bvFTD):** Early **behavior/personality change**, disinhibition/apathy, dietary changes, and frontal/insular atrophy; memory may be relatively spared early—mismatch with amnestic presentation.",
+      "- **D (Vascular dementia):** Often **stepwise** course with focal deficits; MRI shows **strategic infarcts** or confluent **white-matter disease**, not isolated hippocampal atrophy.",
+      "- **E (Pseudodementia):** Depressed mood, variable effort, and **improved recall with cues** are typical; structural atrophy pattern is not expected.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Bedside cognitive screen (MoCA/MMSE) emphasizing delayed recall and cueing; poor recall with minimal cueing benefit suggests AD; **Confirms?** ❌",
+      "- **Next Diagnostic step:** 🧠 MRI brain to assess [blue]medial temporal (hippocampal) atrophy[/blue] and exclude structural mimics; **Confirms?** ➕",
+      "- **Best Diagnostic Step:** **CSF AD biomarkers** (↓Aβ42 or ↓Aβ42/40, ↑p-tau, ↑t-tau) or **amyloid PET** ± **tau PET** for in-vivo confirmation; **Confirms?** ✅",
+      "- **Adjuncts:** Labs (TSH, B12, CBC/CMP), depression screen, sleep apnea screening; FDG-PET (posterior cingulate/precuneus hypometabolism) if needed.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Diagnosis disclosure, safety planning[/green] (driving, meds, finances), caregiver education, exercise, Mediterranean-style diet, vascular risk control.",
+      "- **First Line:** [green]Cholinesterase inhibitor[/green] (donepezil/rivastigmine/galantamine) for mild–moderate AD; [green]memantine[/green] for moderate–severe or add-on; cognitive rehab and structured routines.",
+      "- **Gold Standard:** No cure; [green]multidisciplinary care[/green]; consider **anti-amyloid monoclonals** only if **biomarker-positive**, appropriate stage, and monitoring/ARIA risk management feasible; [red]minimize anticholinergics and sedatives[/red].",
+      "**5️⃣ Full Pathophysiology Explained (DDx focus)**",
+      "- **AD:** Aβ plaques and tau tangles disrupt hippocampal circuits → **encoding/storage failure** → poor cueing.",
+      "- **DLB:** α-synuclein (Lewy bodies) in brainstem/limbic/neocortex → hallucinations, fluctuations, parkinsonism; visuospatial deficits early.",
+      "- **bvFTD:** Tau/TDP-43 pathology in frontal/insular networks → behavior/executive dysfunction > memory early.",
+      "- **Vascular dementia:** Ischemic burden (infarcts/leukoaraiosis) → stepwise decline, focal signs, executive slowing.",
+      "- **Depression:** Network intact; **retrieval** problem improves with cues and mood treatment; no characteristic atrophy.",
+      "**6️⃣ Symptoms — pattern recognition for DDx**",
+      "- **AD:** Repeats questions, misplaces items, gets lost; poor cueing; hippocampal atrophy.",
+      "- **DLB:** Hallucinations, fluctuations, REM sleep behavior disorder, parkinsonism.",
+      "- **bvFTD:** Disinhibition/apathy, loss of empathy, compulsions, hyperorality; frontal atrophy.",
+      "- **Vascular:** Stepwise decline, focal deficits (e.g., hemiparesis), gait disturbance; vascular lesions on imaging.",
+      "- **Depression:** Low mood/anhedonia, variable effort, “I don’t know” responses, better with prompting.",
+      "- [purple]Exam pearl:[/purple] ==Storage failure (poor cueing) + hippocampal atrophy → choose **AD** over retrieval disorders==",
     ],
   },
   {
-    id: "AD-1020",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "An 84-year-old woman with a 10-year history of Alzheimer’s disease is nonverbal, incontinent, and fully dependent on caregivers for all ADLs. She has recurrent urinary tract infections and weight loss. Her MMSE score is 3/30. Brain MRI shows severe global atrophy. She is on donepezil 10 mg and memantine 10 mg twice daily. Which SINGLE etiological factor underlies this patient’s severe Alzheimer’s disease?",
+    id: "AD-INV-20006",
+    topic: "Geriatrics • Alzheimer’s disease — Best Initial Investigation",
+    difficulty: "Medium",
+    vignetteTitle: "First test when you suspect amnestic Alzheimer’s",
+    stem: "A 75-year-old with 2–3 years of gradually progressive episodic memory loss (repeated questions, misplacing items, getting lost) has poor delayed recall with minimal cueing benefit on bedside testing. Language/behavior are relatively preserved early; neuro exam is nonfocal. What is the **best initial investigation** to pursue?",
     options: [
-      {
-        key: "A",
-        text: "Progressive amyloid and tau pathology leading to widespread neurodegeneration",
-      }, // correct
+      { key: "A", text: "Non-contrast CT head" },
       {
         key: "B",
-        text: "Chronic microvascular ischemia from untreated diabetes",
+        text: "MRI brain with volumetric sequences (medial temporal assessment)",
       },
       {
         key: "C",
-        text: "Long-term exposure to pesticides causing neuronal toxicity",
+        text: "CSF Alzheimer biomarkers (Aβ42, Aβ42/40, p-tau, t-tau)",
       },
-      { key: "D", text: "Autoimmune attack on cortical synapses" },
-      {
-        key: "E",
-        text: "Degeneration of dopaminergic neurons in the substantia nigra",
-      },
-    ],
-    correct: "A",
-    explanation_detail: [
-      "🌟 **First principles**: Severe Alzheimer’s disease (AD) results from progressive amyloid-beta plaques and tau neurofibrillary tangles causing widespread neuronal loss and synaptic failure across cortical and subcortical regions. This leads to global atrophy, loss of basic functions (e.g., communication, mobility), and complications like infections and weight loss. Aging is the primary risk factor, with sporadic AD comprising >95% of cases, driven by cumulative amyloid/tau pathology over decades.",
-      "🧬 **Etiology considerations**: Severe global atrophy on MRI confirms end-stage neurodegeneration. Amyloid and tau disrupt neural networks, with prevalence of AD reaching ~32% by age 85. Complications like urinary tract infections (UTIs) occur in ~40% of severe AD patients due to incontinence and immobility. Weight loss reflects dysphagia or reduced intake, common in FAST stage 7. Differential diagnoses include vascular dementia (vascular lesions) and Parkinson’s dementia (dopaminergic loss), ruled out by history and imaging. Palliative care and caregiver support are critical, with ~60% of caregivers experiencing burnout.",
-      "❌ **Why not others**: Microvascular ischemia from diabetes (B) causes vascular dementia, not AD; no diabetes or vascular findings are reported. Pesticide exposure (C) is a hypothesized risk factor but not a primary cause compared to amyloid/tau. Autoimmune synaptic attack (D) occurs in encephalitis, not AD. Dopaminergic degeneration (E) is characteristic of Parkinson’s, not AD, which spares the substantia nigra.",
-    ],
-  },
-  {
-    id: "AD-1021",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 62-year-old professor presents with a 2-year history of difficulty recalling recent lectures and organizing research papers. He remains independent but struggles with complex tasks. His MMSE score is 26/30, with deficits in memory and executive function. Brain MRI shows mild temporal atrophy, and amyloid PET is positive. His father and aunt had dementia in their early 60s. Which SINGLE etiological factor is most likely for this patient’s early-onset Alzheimer’s disease?",
-    options: [
-      {
-        key: "A",
-        text: "Autosomal dominant mutations in PSEN1, PSEN2, or APP genes",
-      }, // correct
-      {
-        key: "B",
-        text: "Chronic cerebral hypoperfusion from atrial fibrillation",
-      },
-      { key: "C", text: "Repeated concussions from prior sports injuries" },
-      { key: "D", text: "Chronic viral infection causing neuroinflammation" },
-      { key: "E", text: "Deficiency of neuroprotective neurotrophic factors" },
-    ],
-    correct: "A",
-    explanation_detail: [
-      "🌟 **First principles**: Early-onset Alzheimer’s disease (EOAD, onset <65) is frequently driven by autosomal dominant mutations in PSEN1, PSEN2, or APP genes, which increase amyloid-beta production, leading to early plaque formation and neuronal loss. These mutations account for ~50-70% of familial EOAD cases and are highly penetrant, causing dementia in multiple family members across generations. The prevalence of EOAD is ~5-10% of all AD cases, contrasting with sporadic AD’s later onset.",
-      "🧬 **Etiology considerations**: The patient’s family history (father and aunt with dementia in their 60s) strongly suggests genetic etiology, likely PSEN1 (most common, ~80% of familial EOAD), PSEN2, or APP mutations. Positive amyloid PET confirms amyloid pathology, and mild temporal atrophy aligns with early AD. Genetic counseling is critical due to 50% inheritance risk for first-degree relatives. Differential diagnoses include vascular dementia (stroke-related) and traumatic encephalopathy (trauma history), ruled out here. Environmental factors (e.g., low cognitive reserve) may amplify risk but are secondary. Management includes cholinesterase inhibitors (e.g., donepezil 5 mg) and genetic testing to confirm mutations.",
-      "❌ **Why not others**: Chronic hypoperfusion from atrial fibrillation (B) causes vascular dementia, not EOAD; no vascular risk factors or MRI infarcts are reported. Repeated concussions (C) increase AD risk but require trauma history, absent here. Chronic viral infections (D) like herpes simplex are hypothesized but lack evidence as a primary cause. Neurotrophic factor deficiency (E) is a secondary feature, not the primary etiology, unlike genetic mutations in EOAD.",
-    ],
-  },
-  {
-    id: "AD-1022",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 80-year-old retired farmer presents with a 4-year history of memory loss, disorientation, and difficulty managing household tasks. He needs help with finances and meal preparation but can perform basic ADLs. His MMSE score is 19/30, with deficits in memory and orientation. Brain MRI shows temporal and parietal atrophy. He has no family history of dementia but a long history of pesticide exposure. Blood tests are normal, and he has no vascular risk factors. Which SINGLE investigation is most appropriate to confirm the diagnosis of moderate Alzheimer’s disease in this patient?",
-    options: [
-      { key: "A", text: "Amyloid PET scan to detect amyloid-beta plaques" }, // correct
-      { key: "B", text: "Brain CT to detect vascular lesions" },
-      { key: "C", text: "EEG to evaluate for epileptiform activity" },
-      {
-        key: "D",
-        text: "Serum inflammatory markers to rule out autoimmune causes",
-      },
-      { key: "E", text: "Genetic testing for APOE ε4 status" },
-    ],
-    correct: "A",
-    explanation_detail: [
-      "🌟 **First principles**: Confirming moderate Alzheimer’s disease (AD, MMSE 10-20) requires evidence of amyloid-beta pathology, as memory and functional deficits alone are nonspecific. Amyloid PET scans detect amyloid plaques with >90% sensitivity/specificity, confirming AD diagnosis in moderate stages when clinical symptoms are prominent. This distinguishes AD from mimics like vascular dementia or frontotemporal dementia (FTD).",
-      "🧠 **Investigation considerations**: Temporal/parietal atrophy on MRI supports AD, but amyloid PET is definitive for pathology. CSF analysis (low Aβ42, high tau) is an alternative but invasive. The patient’s pesticide exposure may increase AD risk (~1.5-2x relative risk for organophosphates), but amyloid confirmation is key. Differential diagnoses include vascular dementia (vascular lesions), FTD (frontal atrophy), and encephalopathy (EEG abnormalities), ruled out by normal blood tests and MRI findings. Prevalence of sporadic AD in this age group is ~15-20%, and amyloid PET is increasingly used in specialized settings. Management includes adding memantine to donepezil and addressing environmental risk reduction.",
-      "❌ **Why not others**: Brain CT (B) is less sensitive than MRI for AD and is used for vascular dementia, not indicated here without vascular risk factors. EEG (C) is for seizures or encephalopathy, not routine for AD; no seizure history exists. Serum inflammatory markers (D) are nonspecific and relevant for autoimmune encephalitis, not AD. Genetic testing for APOE ε4 (E) assesses risk, not diagnosis, and is less specific than amyloid PET.",
-    ],
-  },
-  {
-    id: "AD-1023",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Easy",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 79-year-old woman presents with a 1-year history of forgetting recent events, such as appointments, and occasionally repeating questions. She remains independent in daily activities like cooking and shopping. Her MMSE score is 27/30, with deficits in delayed recall. She has no history of stroke, trauma, or significant vascular risk factors. Her mother had dementia in her 80s. Blood tests (thyroid, B12, folate) are normal. Which SINGLE investigation is most appropriate to confirm the diagnosis of early Alzheimer’s disease in this patient?",
-    options: [
-      { key: "A", text: "Brain CT to assess for cortical infarcts" },
-      { key: "B", text: "Amyloid PET scan to detect amyloid-beta plaques" }, // correct
-      { key: "C", text: "EEG to evaluate for epileptiform activity" },
-      { key: "D", text: "Lumbar puncture for bacterial culture" },
-      {
-        key: "E",
-        text: "Dopamine transporter scan (DaTscan) to assess nigrostriatal function",
-      },
+      { key: "D", text: "Amyloid PET (± tau PET)" },
+      { key: "E", text: "Comprehensive neuropsychological testing" },
     ],
     correct: "B",
     explanation_detail: [
-      "🌟 **First principles**: Early Alzheimer’s disease (AD, MMSE 21-26) diagnosis requires confirmation of amyloid-beta pathology, as memory deficits alone may reflect mild cognitive impairment (MCI) or other dementias. Amyloid PET scans detect amyloid plaques with high sensitivity (>90%) and specificity (>85%), confirming AD in early stages when clinical symptoms are mild. This is critical to differentiate AD from reversible causes or other neurodegenerative disorders.",
-      "🧠 **Investigation considerations**: The patient’s MMSE of 27/30 and deficits in delayed recall suggest early AD or amnestic MCI (10-15% annual conversion to AD). Normal blood tests rule out reversible causes (e.g., hypothyroidism, B12 deficiency). Family history increases APOE ε4 risk (~40% prevalence in AD). MRI showing hippocampal atrophy supports AD, but amyloid PET is definitive. Differential diagnoses include vascular dementia (infarcts), Lewy body dementia (hallucinations), and frontotemporal dementia (behavioral changes). Amyloid PET is used in ~10% of specialized AD evaluations due to cost but is highly accurate. CSF biomarkers (low Aβ42, high tau) are an alternative if PET is unavailable. Management includes cholinesterase inhibitors if AD is confirmed.",
-      "❌ **Why not others**: Brain CT (A) is less sensitive than MRI and used for vascular dementia, not AD; no vascular risk factors exist. EEG (C) is for seizures or encephalopathy, not routine AD workup; no seizures are reported. Lumbar puncture for bacterial culture (D) is for meningitis, not AD; CSF biomarkers could be considered but are secondary to PET. DaTscan (E) is for Parkinson’s or Lewy body dementia, not AD, which spares nigrostriatal pathways.",
+      "**1️⃣ Why it is the correct answer**",
+      "- **MRI brain with volumetrics** is the **best initial investigation** in suspected Alzheimer’s disease (AD) because it both **excludes structural mimics** (tumor, subdural, NPH, strategic stroke) and identifies a **syndrome-consistent pattern**.",
+      "- In amnestic AD, MRI often shows [blue]**bilateral hippocampal/mesial temporal atrophy**[/blue] with relative sparing of primary cortices—high-yield for clinico-radiologic alignment.",
+      "- MRI outperforms CT for **gray-matter resolution** and **pattern recognition**; volumetrics quantify medial temporal atrophy and asymmetry.",
+      "- [green]Practical win:[/green] one scan answers “**Is there a treatable structural cause?**” and “**Does the pattern fit AD?**” 🧠🖥️",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A. CT head:** Useful if MRI unavailable/contraindicated, but **less sensitive** for medial temporal atrophy and subtle pathology.",
+      "- **C. CSF biomarkers:** Excellent for **biomarker confirmation**, but **not first**—invasive and pursued after structural imaging rules out mimics.",
+      "- **D. Amyloid PET:** Powerful but **costly/limited access** and not first-line; used when diagnosis remains uncertain after MRI/labs or for treatment decisions.",
+      "- **E. Neuropsych testing:** Crucial to **quantify domains** and track change, but imaging is prioritized initially to **exclude structural disease**.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Bedside cognitive screen (MoCA/MMSE) emphasizing **delayed recall** and cueing → **poor recall, minimal cueing benefit**. **Confirms?** ❌ Suggests AD pattern.",
+      "- **Next Diagnostic step (Best Initial Investigation):** 🧠 **MRI brain with volumetrics** → [blue]hippocampal/mesial temporal atrophy[/blue], rule out mass/subdural/NPH/strategic stroke. **Confirms?** ➕ Strongly supports AD and excludes mimics.",
+      "- **Best Diagnostic Step (for in-vivo confirmation):** **CSF AD profile** (↓Aβ42/42–40, ↑p-tau, ↑t-tau) **or** **amyloid PET** ± **tau PET**. **Confirms?** ✅ Biomarker-consistent AD.",
+      "- **Adjuncts:** Labs (TSH, B12, CBC/CMP), depression screen, OSA screen; FDG-PET (posterior cingulate/precuneus hypometabolism) if needed.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Diagnosis disclosure, safety planning[/green] (driving, meds, finances), caregiver education, exercise + Mediterranean-style diet, vascular risk control.",
+      "- **First Line:** [green]Cholinesterase inhibitor[/green] for mild–moderate AD; **memantine** for moderate–severe or add-on; cognitive rehab, routines, environmental supports.",
+      "- **Gold Standard:** No cure; [green]multidisciplinary care[/green]. Consider **anti-amyloid monoclonals** only if **biomarker-positive**, appropriate stage, and monitoring for ARIA is feasible; [red]minimize anticholinergics/sedatives[/red].",
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- **Aβ plaques** and **tau tangles** disrupt hippocampal circuits, causing **encoding/storage failure** → **poor delayed recall** and weak cueing.",
+      "- Network degeneration yields **mesial temporal atrophy** on MRI and posterior cingulate/precuneus hypometabolism on FDG-PET.",
+      "- Biomarkers (CSF/PET) capture **amyloid and tau** pathology in vivo, corroborating the structural/clinical picture.",
+      "**6️⃣ Symptoms — pattern recognition link to imaging**",
+      "- **Repeating questions/misplacing items** 📝 → hippocampal storage failure ↔ [blue]medial temporal atrophy[/blue].",
+      "- **Poor cueing benefit** 🧩 → true amnestic (storage) deficit, not retrieval alone.",
+      "- **Getting lost** 🗺️ → parahippocampal/retrosplenial network involvement.",
+      "- [purple]Pearl:[/purple] ==Suspected AD? Do **MRI (with volumetrics)** first—then confirm with **CSF or amyloid PET** as needed==.",
     ],
   },
   {
-    id: "AD-1024",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 77-year-old man with a 3-year history of Alzheimer’s disease presents with worsening memory, disorientation, and new-onset agitation, particularly in the evenings. He requires assistance with dressing and has an MMSE score of 16/30, with deficits in memory and orientation. Brain MRI shows temporal and parietal atrophy. He is on donepezil 10 mg daily. Which SINGLE investigation is most useful to assess the progression of this patient’s moderate Alzheimer’s disease?",
+    id: "AD-GOLD-20007",
+    topic: "Geriatrics • Alzheimer’s disease — Gold Standard Investigation",
+    difficulty: "Medium",
+    vignetteTitle: "What truly confirms Alzheimer’s disease etiology?",
+    stem: "A 76-year-old with 3 years of progressive episodic memory loss has MRI showing bilateral hippocampal atrophy. CSF reveals low Aβ42/42–40 and elevated p-tau/t-tau; amyloid PET is positive. Family asks: “What is the final, gold standard test that proves this is Alzheimer’s disease?”",
     options: [
-      { key: "A", text: "Repeat MMSE to monitor cognitive decline" }, // correct
-      { key: "B", text: "Brain SPECT to evaluate cerebral blood flow" },
-      { key: "C", text: "Lumbar puncture for inflammatory markers" },
-      { key: "D", text: "PET scan for dopamine receptor binding" },
-      { key: "E", text: "Serum amyloid A levels to assess disease severity" },
-    ],
-    correct: "A",
-    explanation_detail: [
-      "🌟 **First principles**: Monitoring progression in moderate Alzheimer’s disease (AD, MMSE 10-20) relies on serial cognitive testing, such as the MMSE or MoCA, to quantify decline in memory, orientation, and other domains. The MMSE tracks progression cost-effectively, with a typical annual decline of 2-4 points in moderate AD. This informs management adjustments, such as adding memantine or addressing behavioral symptoms like agitation.",
-      "🧠 **Investigation considerations**: The MMSE score of 16/30 confirms moderate AD, with new agitation (sundowning) affecting ~30% of patients in this stage. Temporal/parietal atrophy on MRI is consistent with AD progression. Functional assessments (e.g., ADCS-ADL) complement cognitive scores, showing increased dependence (e.g., dressing). Differential diagnoses include delirium (acute onset) and Lewy body dementia (hallucinations), ruled out by history. Brain SPECT or CSF analysis is reserved for diagnostic uncertainty, not routine progression monitoring. Approximately 50% of moderate AD patients require medication adjustments within 2-3 years. Non-pharmacologic strategies (e.g., light therapy) address sundowning.",
-      "❌ **Why not others**: Brain SPECT (B) evaluates perfusion in vascular dementia or FTD, not AD progression; MRI is sufficient. Lumbar puncture for inflammatory markers (C) is for encephalitis, not AD monitoring. Dopamine PET (D) is for Lewy body dementia, not AD. Serum amyloid A (E) is a nonspecific inflammatory marker, not validated for AD progression.",
-    ],
-  },
-  {
-    id: "AD-1025",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "An 85-year-old man with a 9-year history of Alzheimer’s disease is nonverbal, incontinent, and fully dependent on caregivers for all ADLs, including feeding. He has had recurrent aspiration pneumonia. His MMSE score is 4/30. Brain MRI shows severe global atrophy. He is on donepezil 10 mg and memantine 10 mg twice daily. Which SINGLE investigation is most appropriate to evaluate the complications associated with this patient’s severe Alzheimer’s disease?",
-    options: [
-      { key: "A", text: "Chest X-ray to assess for aspiration pneumonia" }, // correct
-      { key: "B", text: "Amyloid PET to quantify amyloid burden" },
-      { key: "C", text: "EEG to detect subclinical seizures" },
-      { key: "D", text: "Brain CT to evaluate for acute stroke" },
-      { key: "E", text: "Blood tests for dopamine levels" },
-    ],
-    correct: "A",
-    explanation_detail: [
-      "🌟 **First principles**: Severe Alzheimer’s disease (AD, MMSE <10) is associated with complications like aspiration pneumonia, occurring in ~50% of patients due to swallowing dysfunction from brainstem and cortical neurodegeneration. Chest X-ray is the first-line investigation to confirm pneumonia, guiding antibiotic therapy and swallowing assessments to prevent recurrence. This addresses a leading cause of mortality in severe AD.",
-      "🧠 **Investigation considerations**: Global atrophy on MRI reflects end-stage AD (FAST stage 7). Recurrent aspiration pneumonia requires urgent evaluation with chest X-ray, as dysphagia affects ~60% of severe AD patients. Swallowing assessment by a speech therapist reduces aspiration risk. Differential diagnoses include heart failure (pulmonary edema) or stroke (focal deficits), ruled out by history and imaging. EEG or amyloid PET is unnecessary in severe AD, where complications, not diagnosis, are the focus. Palliative care consultation aligns treatment with comfort goals, with ~20% of severe AD patients transitioning to hospice annually.",
-      "❌ **Why not others**: Amyloid PET (B) is for early diagnosis, not complications in severe AD. EEG (C) is for seizures, not indicated without seizure history. Brain CT (D) is for acute stroke, not relevant without focal signs or vascular risk factors. Dopamine levels (E) are irrelevant to AD complications and not used in dementia evaluation.",
-    ],
-  },
-  {
-    id: "AD-1026",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 63-year-old architect presents with a 2-year history of difficulty with spatial tasks, such as designing blueprints, and trouble navigating familiar places. Her memory for recent events is relatively preserved. Her MMSE score is 28/30, with deficits in visuospatial tasks. Brain MRI shows parietal and occipital atrophy, and family history includes a mother with dementia at age 64. Blood tests are normal. Which SINGLE investigation is most critical to confirm the diagnosis of early-onset Alzheimer’s disease in this patient?",
-    options: [
-      { key: "A", text: "CSF analysis for amyloid-beta and tau biomarkers" }, // correct
-      { key: "B", text: "Brain CT to assess for hydrocephalus" },
-      {
-        key: "C",
-        text: "Serum glucose levels to rule out diabetes-related cognitive impairment",
-      },
-      { key: "D", text: "SPECT scan to evaluate frontal lobe perfusion" },
-      { key: "E", text: "Genetic testing for Huntington’s disease mutations" },
-    ],
-    correct: "A",
-    explanation_detail: [
-      "🌟 **First principles**: Early-onset Alzheimer’s disease (EOAD, onset <65) with atypical visuospatial deficits, suggestive of the posterior cortical atrophy (PCA) variant, requires confirmation of amyloid-beta and tau pathology. CSF analysis measuring low amyloid-beta (Aβ42) and high total/phosphorylated tau has >90% sensitivity and specificity for AD, confirming diagnosis in atypical presentations. This is critical to distinguish EOAD from other neurodegenerative or non-neurodegenerative causes.",
-      "🧠 **Investigation considerations**: The patient’s visuospatial deficits and parietal/occipital atrophy on MRI suggest PCA-AD, which affects ~5-10% of AD cases. Family history (mother with dementia at 64) raises suspicion for genetic mutations (e.g., PSEN1, ~80% of familial EOAD). Normal blood tests rule out metabolic causes (e.g., B12 deficiency, hypothyroidism). Amyloid PET is an alternative but less accessible; CSF is widely used in specialized centers (~15% of EOAD evaluations). Differential diagnoses include corticobasal degeneration (asymmetric motor signs), normal pressure hydrocephalus (NPH, gait/apathy), and Huntington’s (chorea), all unlikely here. Genetic testing may follow if CSF confirms AD. Management includes cholinesterase inhibitors and occupational therapy for visuospatial deficits.",
-      "❌ **Why not others**: Brain CT (B) assesses NPH, but the patient’s atrophy pattern and lack of gait/apathy symptoms rule it out. Serum glucose (C) is irrelevant without diabetes history; blood tests are normal. SPECT (D) is for vascular dementia or FTD, less specific than CSF for AD. Huntington’s genetic testing (E) is for movement disorders, not visuospatial deficits.",
-    ],
-  },
-  {
-    id: "AD-1027",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 74-year-old woman with a 4-year history of Alzheimer’s disease presents with worsening word-finding difficulty and trouble understanding conversations. She needs assistance with complex tasks like cooking but manages personal hygiene. Her MMSE score is 18/30, with deficits in language and memory. She has no history of stroke. Brain MRI shows left temporal and parietal atrophy. Which SINGLE investigation is most appropriate to differentiate this patient’s moderate Alzheimer’s disease from frontotemporal dementia?",
-    options: [
-      {
-        key: "A",
-        text: "Fluorodeoxyglucose (FDG)-PET scan to assess regional hypometabolism",
-      }, // correct
-      { key: "B", text: "Brain CT to detect vascular lesions" },
-      {
-        key: "C",
-        text: "Serum inflammatory markers to rule out autoimmune encephalitis",
-      },
-      { key: "D", text: "EEG to evaluate for temporal lobe epilepsy" },
-      { key: "E", text: "Blood tests for vitamin D deficiency" },
-    ],
-    correct: "A",
-    explanation_detail: [
-      "🌟 **First principles**: Differentiating moderate Alzheimer’s disease (AD, MMSE 10-20) with language deficits (logopenic variant) from frontotemporal dementia (FTD) requires assessing regional brain dysfunction. FDG-PET shows distinct hypometabolism patterns: temporoparietal and posterior cingulate in AD vs. frontal and anterior temporal in FTD. This has ~85-90% accuracy in distinguishing logopenic AD from FTD’s primary progressive aphasia (PPA) variants, critical for guiding management.",
-      "🧠 **Investigation considerations**: The patient’s language deficits and left temporal/parietal atrophy suggest logopenic AD, affecting ~15-20% of AD patients. FDG-PET is used in ~10% of complex dementia evaluations to confirm diagnosis. CSF biomarkers (low Aβ42, high tau) or amyloid PET are alternatives but less specific for FTD differentiation. No stroke history or vascular lesions rule out vascular dementia. FTD’s semantic PPA (word meaning loss) or nonfluent PPA (speech production issues) differ from AD’s logopenic profile (word-finding, repetition issues). Management includes memantine addition and speech therapy. Approximately 30% of moderate AD patients develop language deficits, impacting communication strategies.",
-      "❌ **Why not others**: Brain CT (B) is for vascular dementia, not relevant without stroke history; MRI is sufficient. Serum inflammatory markers (C) are for autoimmune encephalitis, not AD/FTD. EEG (D) is for seizures, not indicated without seizure history. Vitamin D deficiency tests (E) are irrelevant; blood tests are normal and unrelated to AD/FTD differentiation.",
-    ],
-  },
-  {
-    id: "AD-1028",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Easy",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 78-year-old retired accountant presents with a 1-year history of forgetting recent events, such as appointments, and difficulty recalling names. She remains independent in daily activities like cooking and driving but uses a calendar for reminders. Her MMSE score is 26/30, with deficits in delayed recall. Brain MRI shows mild hippocampal atrophy, and amyloid PET is positive. Blood tests (thyroid, B12, folate) are normal. Which SINGLE management strategy is most appropriate for this patient’s early Alzheimer’s disease?",
-    options: [
-      { key: "A", text: "Start memantine to slow cognitive decline" },
+      { key: "A", text: "MRI brain with volumetric analysis" },
       {
         key: "B",
-        text: "Initiate donepezil at a low dose and provide lifestyle counseling",
-      }, // correct
+        text: "FDG-PET brain (posterior cingulate/precuneus hypometabolism)",
+      },
       {
         key: "C",
-        text: "Prescribe a low-dose antipsychotic for memory-related anxiety",
+        text: "CSF Alzheimer biomarker profile (Aβ42 or Aβ42/40, p-tau, t-tau)",
       },
-      { key: "D", text: "Recommend immediate institutionalization for safety" },
+      { key: "D", text: "Amyloid PET (± tau PET)" },
       {
         key: "E",
-        text: "Order cognitive behavioral therapy as the primary treatment",
+        text: "Neuropathology with immunohistochemistry demonstrating amyloid-β plaques and tau neurofibrillary tangles",
       },
     ],
-    correct: "B",
+    correct: "E",
     explanation_detail: [
-      "🌟 **First principles**: Early Alzheimer’s disease (AD, MMSE 21-26) is managed with cholinesterase inhibitors (e.g., donepezil) to enhance acetylcholine levels, modestly improving cognition and function. Starting at a low dose (5 mg daily) minimizes side effects (e.g., nausea, diarrhea). Lifestyle counseling, including aerobic exercise, Mediterranean diet, and cognitive stimulation, reduces progression risk by ~30% and supports cognitive reserve, critical in early AD.",
-      "🧠 **Management considerations**: The patient’s MMSE of 26/30 and amyloid PET positivity confirm early AD. Independence in ADLs suggests mild stage (CDR 0.5-1). Donepezil is FDA-approved for mild AD, with ~60% of patients showing modest cognitive benefit. Lifestyle interventions (e.g., 150 min/week moderate exercise) are evidence-based for slowing decline. Family history increases APOE ε4 risk (~40% prevalence in AD). Differential diagnoses include MCI (less functional impact) and depression (no mood symptoms here). Monitoring with MMSE/MoCA every 6 months tracks progression. Caregiver education on AD trajectory is essential, as ~20% of early AD patients progress to moderate stage within 2 years.",
-      "❌ **Why not others**: Memantine (A) is for moderate-severe AD, not early, where cholinergic deficits predominate. Antipsychotics (C) are for severe behavioral symptoms, not memory issues; they carry stroke/mortality risks. Institutionalization (D) is premature for independent patients; safety aids (e.g., calendars) suffice. CBT (E) is adjunctive for mood disorders, not a primary AD treatment.",
+      "**1️⃣ Why it is the correct answer**",
+      "- **Gold standard = tissue diagnosis**: **Neuropathology with immunohistochemistry** directly visualizes the defining lesions of AD—**amyloid-β plaques** and **tau neurofibrillary tangles**.",
+      "- While **CSF/PET biomarkers** are powerful in vivo tools, they **infer** pathology; only tissue **proves** it.",
+      "- In clinical practice, this is typically **post-mortem**; brain biopsy is **rare** and reserved for atypical, rapidly progressive, or treatable-mimic scenarios.",
+      "- [yellow]Bottom line:[/yellow] Imaging/CSF = strong evidence; **histopathology** = definitive proof. 🧠🔬",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A. MRI volumetrics:** Excellent for **pattern recognition** (hippocampal atrophy) and excluding mimics, but **cannot confirm** molecular pathology.",
+      "- **B. FDG-PET:** Shows **hypometabolism** in posterior cingulate/precuneus/temporoparietal cortex—**supportive**, not definitive.",
+      "- **C. CSF biomarkers:** High diagnostic accuracy (↓Aβ42/42–40, ↑p-tau, ↑t-tau) but **indirect**; does not show plaques/tangles themselves.",
+      "- **D. Amyloid PET (± tau PET):** Visualizes **protein deposition in vivo** and is superb for confirmation/eligibility (e.g., anti-amyloid therapy) yet still **not the gold standard** versus histopathology.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Bedside cognitive screen (MoCA/MMSE) with **delayed recall + cueing** → poor recall with minimal cueing benefit. **Confirms?** ❌ Suggests AD.",
+      "- **Next Diagnostic step:** 🧠 **MRI brain** → [blue]hippocampal/mesial temporal atrophy[/blue]; excludes structural mimics. **Confirms?** ➕ Supports AD.",
+      "- **Best Diagnostic Step (in vivo confirmation):** **CSF AD profile** or **amyloid PET (± tau PET)** consistent with AD biology. **Confirms?** ✅ In vivo biomarker confirmation.",
+      "- **Gold Standard (definitive):** 🔬 **Neuropathology with immunohistochemistry** showing **Aβ plaques** and **tau tangles**. **Confirms?** ✅✅ Definitive diagnosis.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Diagnosis disclosure, safety planning[/green] (driving, meds, finances), caregiver education, exercise/Mediterranean diet, vascular risk control.",
+      "- **First Line:** [green]Cholinesterase inhibitor** for mild–moderate AD; **memantine** for moderate–severe or add-on[/green]; cognitive rehab, structured routines, sleep hygiene.",
+      "- **Gold Standard (therapy context):** No cure; consider **anti-amyloid monoclonal antibodies** only if **biomarker-positive** and suitable for ARIA monitoring; [red]avoid anticholinergics and minimize sedatives[/red].",
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- AD features **amyloid-β plaque** accumulation and **tau tangle** formation leading to **synaptic dysfunction**, neuroinflammation, and **neurodegeneration**.",
+      "- Spread follows a **Braak-like trajectory** from transentorhinal/hippocampal regions to association cortex—matching **episodic memory-first** symptoms.",
+      "- Biomarkers map this biology in vivo (A/T/[N] framework), but **histology** remains the **final arbiter**.",
+      "**6️⃣ Symptoms — pattern recognition link**",
+      "- **Repeated questions/misplacing items** 📝 + **poor cueing** 🧩 → hippocampal storage failure.",
+      "- **Getting lost** 🗺️ and **constructional errors** 🕒 → progression to parietal networks.",
+      "- [purple]Pearl:[/purple] ==CSF/PET convince you; **histopathology** convinces everyone==.",
     ],
   },
   {
-    id: "AD-1029",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "An 80-year-old man with a 4-year history of Alzheimer’s disease presents with worsening memory, disorientation, and agitation, especially in the evenings (sundowning). He requires assistance with finances and dressing but can eat independently. His MMSE score is 17/30. Brain MRI shows temporal and parietal atrophy. He is on donepezil 10 mg daily. Which SINGLE management step is most appropriate to address this patient’s moderate Alzheimer’s disease and behavioral symptoms?",
+    id: "AD-ETIO-20008",
+    topic: "Geriatrics • Alzheimer’s disease — Etiology (Causes)",
+    difficulty: "Medium",
+    vignetteTitle: "What’s the core cause behind amnestic Alzheimer’s?",
+    stem: "A 76-year-old with 3 years of progressive episodic memory loss (repeated questions, getting lost, poor cueing benefit) has MRI showing bilateral hippocampal/mesial temporal atrophy. No early hallucinations or parkinsonism. Which underlying **etiology** best explains this syndrome?",
     options: [
       {
         key: "A",
-        text: "Increase donepezil dose to 20 mg daily to reduce agitation",
+        text: "Amyloid-β plaque deposition with tau neurofibrillary tangles (Alzheimer pathology)",
       },
+      { key: "B", text: "α-synuclein (Lewy body) pathology" },
+      { key: "C", text: "TDP-43–predominant frontotemporal degeneration" },
+      { key: "D", text: "Multi-infarct vascular injury (strategic strokes)" },
       {
-        key: "B",
-        text: "Add memantine and implement non-pharmacologic strategies for agitation",
-      }, // correct
-      { key: "C", text: "Start a high-dose benzodiazepine for sundowning" },
-      { key: "D", text: "Discontinue donepezil due to disease progression" },
-      { key: "E", text: "Prescribe an SSRI without further evaluation" },
+        key: "E",
+        text: "Reversible hypothyroidism causing cognitive impairment",
+      },
     ],
-    correct: "B",
+    correct: "A",
     explanation_detail: [
-      "🌟 **First principles**: Moderate Alzheimer’s disease (AD, MMSE 10-20) with behavioral symptoms like sundowning (evening agitation, affecting ~30% of patients) is managed by adding memantine, an NMDA receptor antagonist, to cholinesterase inhibitors (e.g., donepezil) to reduce glutamate excitotoxicity, improving cognition and behavior. Non-pharmacologic strategies (e.g., structured routines, light therapy) are first-line for agitation, reducing reliance on risky medications.",
-      "🧠 **Management considerations**: The MMSE score of 17/30 and temporal/parietal atrophy confirm moderate AD. Memantine (start 5 mg daily, titrate to 10 mg twice daily) is FDA-approved for moderate-severe AD, with ~50% of patients showing reduced BPSD. Non-pharmacologic interventions (e.g., ABC approach: Antecedents, Behavior, Consequences) are effective in ~70% of agitation cases. Differential diagnoses include delirium (acute onset) and Lewy body dementia (hallucinations), ruled out by history. Caregiver education reduces stress, as ~40% of moderate AD caregivers report burnout. Monitoring with MMSE and functional assessments every 6 months guides therapy adjustments.",
-      "❌ **Why not others**: Increasing donepezil to 20 mg (A) risks cholinergic side effects without behavioral benefit. High-dose benzodiazepines (C) increase confusion and fall risk, contraindicated in AD. Discontinuing donepezil (D) may worsen symptoms, as it retains benefit in moderate AD. SSRIs (E) require mood evaluation; no depression is noted here.",
+      "**1️⃣ Why it is the correct answer**",
+      "- **Alzheimer’s disease (AD)** is defined pathologically by **amyloid-β (Aβ) plaques** and **tau neurofibrillary tangles**.",
+      "- The **amnestic presentation** with **poor cueing benefit** reflects **hippocampal storage failure**, matching tau spread in medial temporal regions.",
+      "- MRI showing [blue]**hippocampal/mesial temporal atrophy**[/blue] aligns with AD’s early neuroanatomy (Braak trajectory).",
+      "- Biomarkers (↓Aβ42/42–40, ↑p-tau/t-tau; amyloid PET+) map this **Aβ/tau biology** in vivo.",
+      "- [yellow]Pattern lock:[/yellow] gradual memory-first decline + hippocampal atrophy + AD biomarkers → **Aβ + tau**. 🧠🧩",
+      "**2️⃣ Why the other options are wrong**",
+      "- **B. Lewy body disease (α-synuclein):** Early **visual hallucinations**, **fluctuations**, **parkinsonism**, REM sleep behavior disorder—absent here; hippocampal-predominant atrophy not typical early.",
+      "- **C. TDP-43 FTD:** Drives **frontotemporal syndromes** (bvFTD, svPPA) with behavior or language-first features, not storage-dominant amnesia.",
+      "- **D. Vascular dementia:** **Stepwise decline** with focal deficits; imaging shows **infarcts/leukoaraiosis**, not isolated hippocampal atrophy.",
+      "- **E. Hypothyroidism:** Reversible metabolic cause with systemic signs; cognition usually **improves with treatment** and lacks AD biomarker pattern.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Bedside cognitive screen (MoCA/MMSE) with **delayed recall + cueing** → poor recall, minimal cueing benefit. **Confirms?** ❌ Suggests AD.",
+      "- **Next Diagnostic step:** 🧠 **MRI brain** → [blue]hippocampal/mesial temporal atrophy[/blue]; exclude structural mimics. **Confirms?** ➕ Supports AD.",
+      "- **Best Diagnostic Step (in vivo etiology):** **CSF AD biomarkers** (↓Aβ42/42–40, ↑p-tau, ↑t-tau) **or** **amyloid PET** ± **tau PET**. **Confirms?** ✅ Consistent with Aβ/tau etiology.",
+      "- **Adjuncts:** Labs to rule out reversibles (TSH, B12, CMP/CBC), depression screen; FDG-PET (posterior cingulate/precuneus hypometabolism) if needed.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Diagnosis disclosure, safety planning[/green] (driving/meds/finances), caregiver education, exercise + Mediterranean-style diet, vascular risk control.",
+      "- **First Line:** [green]Cholinesterase inhibitor** (donepezil/rivastigmine/galantamine) for mild–moderate; **memantine** for moderate–severe or add-on[/green]; cognitive rehab and routines.",
+      "- **Gold Standard:** No cure; [green]multidisciplinary care[/green]. Consider **anti-amyloid monoclonals** only if **biomarker-positive** and monitoring for ARIA is feasible; [red]minimize anticholinergics/sedatives[/red].",
+      "**5️⃣ Full Pathophysiology Explained (Etiology focus)**",
+      "- **Aβ dysmetabolism** → extracellular **plaques**; **tau hyperphosphorylation** → intracellular **neurofibrillary tangles**.",
+      "- **Braak spread**: transentorhinal/hippocampal → associative neocortex → explains memory-first symptoms then visuospatial/language/executive involvement.",
+      "- Result: **synaptic failure**, neuroinflammation, and network atrophy → **hippocampal shrinkage** on MRI, **posterior cingulate/precuneus hypometabolism** on FDG-PET.",
+      "- [purple]Mnemonic:[/purple] “**A & T drive AD**” → **A**myloid + **T**au underpin Alzheimer’s.",
+      "**6️⃣ Symptoms — cause → effect mapping**",
+      "- **Repeated questions, misplacing items** 📝 → hippocampal storage failure from tau-rich medial temporal degeneration.",
+      "- **Poor cueing benefit** 🧩 → true **encoding/storage** deficit (Aβ/tau network damage), not mere retrieval failure.",
+      "- **Getting lost** 🗺️ → involvement of parahippocampal/retrosplenial navigational circuits.",
+      "- **Later language/visuospatial decline** 🧠 → spread to temporoparietal association cortex along Braak staging.",
+      "- [blue]Imaging–biology link:[/blue] hippocampal atrophy ↔ tau tangle burden; amyloid PET/CSF confirms **Aβ** path.",
     ],
   },
   {
-    id: "AD-1030",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "An 87-year-old woman with a 10-year history of Alzheimer’s disease is nonverbal, incontinent, and fully dependent on caregivers for all ADLs, including feeding. She has recurrent aspiration pneumonia and a stage II pressure ulcer. Her MMSE score is 3/30. Brain MRI shows severe global atrophy. She is on donepezil 10 mg and memantine 10 mg twice daily. Her caregiver reports significant stress. Which SINGLE management strategy is most appropriate for this patient’s severe Alzheimer’s disease and caregiver burden?",
+    id: "AD-COMP-20009",
+    topic: "Geriatrics • Alzheimer’s disease — Complications",
+    difficulty: "Medium",
+    vignetteTitle:
+      "What high-risk downstream complication should you anticipate in Alzheimer’s?",
+    stem: "An 80-year-old with moderate Alzheimer’s disease (3 years since diagnosis) has worsening weight loss, prolonged mealtimes, coughing during meals, and two recent chest infections. He also wanders at night and has had one mechanical fall without injury. On exam: inattentive to bolus size, wet/gurgly voice after thin liquids, and reduced gag. Which complication is most important to anticipate and prevent over the next year?",
     options: [
-      {
-        key: "A",
-        text: "Increase memantine dose to improve functional status",
-      },
+      { key: "A", text: "Normal-pressure hydrocephalus with ventriculomegaly" },
+      { key: "B", text: "Parkinsonism with REM sleep behavior disorder" },
+      { key: "C", text: "Serotonin syndrome from SSRI therapy" },
+      { key: "D", text: "Aspiration pneumonia due to oropharyngeal dysphagia" },
+      { key: "E", text: "Intracerebral hemorrhage from anticoagulation" },
+    ],
+    correct: "D",
+    explanation_detail: [
+      "**1️⃣ Why it is the correct answer**",
+      "- **Aspiration pneumonia** is a leading cause of **morbidity and mortality** in moderate–severe Alzheimer’s disease.",
+      "- Progressive **oropharyngeal dysphagia** (impaired bolus control, delayed swallow, reduced airway protection) emerges as cortical and brainstem networks degenerate.",
+      "- The vignette flags classic risk: **cough with meals**, **wet/gurgly voice** after thin liquids, **weight loss**, and **recent chest infections**.",
+      "- [green]Anticipating and mitigating aspiration risk[/green] (swallow assessment, texture modification, feeding strategies) is high-yield and outcomes-relevant.",
+      "- [yellow]Pattern lock:[/yellow] AD + dysphagia signs + recurrent chest infections → **anticipate aspiration pneumonia**. 🫁🍽️",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A (NPH):** Different syndrome (gait, incontinence, ventriculomegaly); not the key complication signaled by mealtime cough/wet voice.",
+      "- **B (DLB features):** Visual hallucinations, parkinsonism, RBD point to Lewy body disease; not driven by AD dysphagia pattern.",
+      "- **C (Serotonin syndrome):** Requires serotonergic excess (clonus, hyperreflexia, hyperthermia); unrelated to swallowing signs here.",
+      "- **E (ICH on anticoagulation):** Important if anticoagulated, but the case emphasizes **feeding-related respiratory risk**, not bleeding.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Focused **dysphagia screen** (cough/choke with liquids/solids, wet voice, prolonged meals, weight loss). **Confirms?** ❌ Suggests aspiration risk.",
+      "- **Next Diagnostic step:** **Bedside swallow assessment** by speech-language therapist with trial textures/liquids and compensatory postures. **Confirms?** ➕ Risk stratification; immediate safety plan.",
+      "- **Best Diagnostic Step:** **Instrumental swallow study** — videofluoroscopic swallow study (VFSS) or FEES → documents **penetration/aspiration**, residue, and safest diet/liquid. **Confirms?** ✅ Objective evidence guides interventions.",
+      "- **Adjuncts:** Nutritional labs/weight trend, oral health check, CXR if respiratory symptoms/fever, pulse oximetry; review meds that **worsen sedation or saliva** (anticholinergics/benzos).",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Aspiration precautions[/green] (upright 30–45 min after meals, slow rate, small boluses), **texture-modified diet** per study, supervised feeds, meticulous **oral hygiene**.",
+      "- **First Line:** [green]Speech–language therapy** for swallow techniques[/green] (chin tuck, effortful swallow), safe-fluid strategies (e.g., thickened liquids if indicated), **nutrition optimization** (calorie-dense foods/supplements), **vaccination** (influenza, pneumococcal).",
+      "- **Gold Standard:** No curative therapy for AD; for refractory unsafe swallowing, discuss **goals of care** (comfort feeding only, risks/benefits of PEG — [blue]PEG does not prevent aspiration of saliva[/blue]); align with patient values; involve palliative care when appropriate. [red]Avoid routine PEG without shared decision-making[/red].",
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- AD pathology (**amyloid-β** and **tau**) spreads from **medial temporal** to **parietal/insular/frontal** networks, degrading attention, praxis, and sensorimotor integration for swallowing.",
+      "- Cortical control of the **oropharyngeal phase** weakens → delayed swallow initiation, poor laryngeal elevation, and **ineffective airway protection**.",
+      "- Frailty, **sarcopenia**, and **poor oral hygiene** increase bacterial load and reduce cough clearance → **microaspiration → pneumonia**.",
+      "- Intercurrent **delirium** and sedatives further impair swallow and airway reflexes, compounding risk.",
+      "**6️⃣ Symptoms — pattern recognition for complications**",
+      "- **Mealtime cough/wet voice** → penetration/aspiration risk.",
+      "- **Weight loss, prolonged meals, food pocketing** → ineffective swallow and inadequate intake.",
+      "- **Recurrent chest infections/low-grade fevers** → possible silent aspiration.",
+      "- **Functional cascade:** aspiration → hospitalization → delirium → deconditioning → pressure injuries/falls.",
+      "- [purple]Safety Pearl:[/purple] ==In moderate–severe AD, screen early and often for **dysphagia** to prevent **aspiration pneumonia**==",
+    ],
+  },
+  {
+    id: "AD-RISK-20010",
+    topic: "Geriatrics • Alzheimer’s disease — Risk Factors",
+    difficulty: "Medium",
+    vignetteTitle:
+      "Modifiable vs nonmodifiable: which risk matters most for prevention?",
+    stem: "A 60-year-old accountant with well-controlled hypertension and type 2 diabetes reports progressive bilateral hearing loss since age 52. He is overweight (BMI 30), walks rarely, and lives alone with limited social engagement. He smokes 5–10 cigarettes/day. His mother developed Alzheimer’s disease at 78. He currently has no cognitive symptoms. Which single intervention targets the **most impactful modifiable risk factor** for late-life dementia/Alzheimer’s disease?",
+    options: [
+      { key: "A", text: "Tighten blood pressure to <130/80 mmHg" },
       {
         key: "B",
-        text: "Refer caregiver to support services and consider palliative care consultation",
-      }, // correct
+        text: "Fit and consistently use hearing aids with auditory rehabilitation",
+      },
       {
         key: "C",
-        text: "Start a high-dose antipsychotic for presumed agitation",
+        text: "Start a high-intensity statin regardless of ASCVD risk",
       },
       {
         key: "D",
-        text: "Discontinue all AD medications due to advanced disease",
+        text: "Adopt Mediterranean-style diet and structured aerobic exercise",
       },
-      {
-        key: "E",
-        text: "Prescribe antibiotics prophylactically for pressure ulcers",
-      },
+      { key: "E", text: "Immediate smoking cessation program" },
     ],
     correct: "B",
     explanation_detail: [
-      "🌟 **First principles**: Severe Alzheimer’s disease (AD, MMSE <10) focuses on palliative care to manage complications (e.g., aspiration pneumonia, pressure ulcers) and optimize comfort. Caregiver support services (e.g., Alzheimer’s Association groups, respite care) address burnout, affecting ~60% of severe AD caregivers. Palliative care consultation aligns treatment with comfort goals, addressing infections and wounds in FAST stage 7 patients.",
-      "🧠 **Management considerations**: The MMSE score of 3/30 and global atrophy confirm end-stage AD. Aspiration pneumonia (prevalence ~50%) and pressure ulcers (~20% in severe AD) require targeted interventions (e.g., swallowing therapy, wound care). Donepezil and memantine may continue for modest benefits unless side effects dominate. Differential diagnoses include severe vascular dementia (vascular lesions) or Lewy body dementia (hallucinations), ruled out by history. Palliative care is used in ~25% of severe AD cases, with hospice considered if life expectancy is <6 months. Caregiver support reduces stress and improves patient outcomes.",
-      "❌ **Why not others**: Increasing memantine (A) beyond 10 mg twice daily lacks evidence and risks side effects (e.g., dizziness). High-dose antipsychotics (C) are for severe, documented agitation, not presumed, due to stroke/mortality risks. Discontinuing AD medications (D) is controversial; benefits may persist. Prophylactic antibiotics (E) are not standard for pressure ulcers; targeted treatment is preferred.",
-    ],
-  },
-  {
-    id: "AD-1031",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 79-year-old woman with a 5-year history of Alzheimer’s disease presents with worsening memory, disorientation, and increased agitation, particularly at night (sundowning). She requires assistance with complex tasks like managing finances but can perform basic ADLs independently. Her MMSE score is 16/30, with deficits in memory and orientation. Brain MRI shows temporal and parietal atrophy. She is on donepezil 10 mg daily and memantine 5 mg daily. Her caregiver reports she has started wandering outside the home. Which SINGLE complication of this patient’s moderate Alzheimer’s disease requires urgent management?",
-    options: [
-      { key: "A", text: "Aspiration pneumonia due to swallowing dysfunction" },
-      { key: "B", text: "Wandering leading to safety risks" }, // correct
-      { key: "C", text: "Acute stroke causing focal neurological deficits" },
-      { key: "D", text: "Seizures secondary to cortical hyperexcitability" },
-      { key: "E", text: "Urinary tract infection from incontinence" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Wandering, affecting 20-40% of moderate Alzheimer’s disease (AD, MMSE 10-20) patients, is a critical complication due to safety risks (e.g., getting lost, falls, injury). It results from frontal and limbic dysfunction disrupting spatial orientation and impulse control. Urgent management with non-pharmacologic strategies (e.g., door alarms, GPS trackers) prevents harm and is prioritized over other complications in this stage.",
-      "🧠 **Complication considerations**: The MMSE score of 16/30 and temporal/parietal atrophy confirm moderate AD. Wandering requires immediate safety measures, as ~60% of AD wanderers risk serious injury if unsupervised. Sundowning (prevalence ~30%) is managed with structured routines and light therapy. Differential diagnoses include delirium (acute onset) and Lewy body dementia (hallucinations), ruled out by history. Memantine (titrated to 10 mg twice daily) and donepezil address cognitive/behavioral symptoms, with ~50% of patients showing BPSD improvement. Caregiver education on safety reduces stress, as ~40% report burnout in moderate AD.",
-      "❌ **Why not others**: Aspiration pneumonia (A) is a severe AD complication, not moderate, as the patient retains ADL function. Acute stroke (C) is unlikely without focal signs or vascular risk factors; MRI shows AD-related atrophy. Seizures (D) occur in ~10% of AD patients, typically later, with no evidence here. Urinary tract infections (E) are common in severe AD with incontinence, not reported in this mobile patient.",
-    ],
-  },
-  {
-    id: "AD-1032",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "An 83-year-old man with an 8-year history of Alzheimer’s disease is nonverbal, incontinent, and fully dependent on caregivers for all ADLs, including feeding and mobility. His MMSE score is 5/30. He has had two episodes of aspiration pneumonia in the past 6 months and recent weight loss. Brain MRI shows severe global atrophy. He is on donepezil 10 mg and memantine 10 mg twice daily. Which SINGLE complication of this patient’s severe Alzheimer’s disease requires targeted management?",
-    options: [
-      { key: "A", text: "Wandering due to disorientation" },
-      {
-        key: "B",
-        text: "Aspiration pneumonia secondary to swallowing dysfunction",
-      }, // correct
-      {
-        key: "C",
-        text: "Visual hallucinations from occipital lobe involvement",
-      },
-      { key: "D", text: "Peripheral neuropathy from vitamin deficiencies" },
-      { key: "E", text: "Acute delirium from medication side effects" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Aspiration pneumonia, affecting ~50% of severe Alzheimer’s disease (AD, MMSE <10) patients, is a leading complication due to swallowing dysfunction from brainstem (e.g., nucleus ambiguus) and cortical neurodegeneration. It causes recurrent infections and is a top cause of mortality, requiring targeted management with antibiotics, swallowing therapy, and nutritional support to prevent recurrence and improve quality of life.",
-      "🧠 **Complication considerations**: The MMSE score of 5/30 and global atrophy confirm end-stage AD (FAST stage 7). Aspiration pneumonia and weight loss (prevalence ~60% in severe AD due to dysphagia) necessitate chest X-ray for diagnosis and speech therapy for swallowing assessment. Differential diagnoses include heart failure (pulmonary edema) and stroke (focal deficits), ruled out by history and imaging. Palliative care, used in ~25% of severe AD cases, focuses on comfort, with hospice considered for <6-month prognosis. Donepezil/memantine may continue unless side effects outweigh benefits. Caregiver support is critical, as ~60% experience burnout.",
-      "❌ **Why not others**: Wandering (A) is typical in moderate AD, not severe, where immobility predominates. Visual hallucinations (C) suggest Lewy body dementia, not AD. Peripheral neuropathy (D) from vitamin deficiencies is not reported; blood tests are normal. Acute delirium (E) is possible but less likely without medication changes or acute triggers.",
-    ],
-  },
-  {
-    id: "AD-1033",
-    topic: "Geriatrics • Alzheimer’s disease",
-    difficulty: "Moderate",
-    vignetteTitle: "Clinic Vignette",
-    stem: "A 76-year-old woman with a 4-year history of Alzheimer’s disease presents with worsening memory, difficulty following conversations, and occasional agitation. She requires assistance with cooking and finances but manages personal hygiene. Her MMSE score is 18/30. Her caregiver reports a recent fall at home, resulting in a bruised hip. Brain MRI shows temporal and parietal atrophy. She is on donepezil 10 mg and memantine 5 mg daily. Which SINGLE complication of this patient’s moderate Alzheimer’s disease needs immediate attention?",
-    options: [
-      { key: "A", text: "Aspiration pneumonia from impaired swallowing" },
-      {
-        key: "B",
-        text: "Falls due to impaired visuospatial function and gait instability",
-      }, // correct
-      { key: "C", text: "Seizures from cortical neuronal loss" },
-      { key: "D", text: "Psychotic symptoms causing severe agitation" },
-      { key: "E", text: "Deep vein thrombosis from prolonged immobility" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "🌟 **First principles**: Falls, affecting ~30% of moderate Alzheimer’s disease (AD, MMSE 10-20) patients, are a major complication due to impaired visuospatial function and gait instability from parietal and frontal lobe pathology. They lead to injuries (e.g., fractures, bruises), increasing morbidity and requiring urgent safety interventions like home modifications and physical therapy to prevent recurrence.",
-      "🧠 **Complication considerations**: The MMSE score of 18/30 and temporal/parietal atrophy confirm moderate AD. Falls are driven by visuospatial deficits (e.g., misjudging distances) and executive dysfunction, with ~25% of AD patients experiencing at least one fall annually. The recent fall and bruise necessitate home safety assessments (e.g., grab bars, clear walkways) and gait training. Differential diagnoses include orthostatic hypotension (no autonomic symptoms) and Lewy body dementia (no parkinsonism). Memantine (titrated to 10 mg twice daily) and donepezil manage cognition/agitation, with non-pharmacologic strategies (e.g., calm environment) reducing agitation in ~70% of cases. Caregiver education on fall prevention is critical, as ~40% report stress.",
-      "❌ **Why not others**: Aspiration pneumonia (A) is typical in severe AD with swallowing issues, not moderate AD with preserved ADLs. Seizures (C) occur in ~10% of AD patients, usually later, with no evidence here. Psychotic symptoms (D) are less common than agitation in AD; her agitation is mild. Deep vein thrombosis (E) is a risk in severe AD with immobility, not this mobile patient.",
+      "**1️⃣ Why it is the correct answer**",
+      "- Midlife **hearing loss** carries one of the largest **population-attributable fractions** for late-life dementia and Alzheimer’s risk.",
+      "- Addressing hearing loss with **hearing aids + auditory rehabilitation** is a **high-yield, modifiable** prevention strategy.",
+      "- Mechanisms include [blue]reduced cognitive load[/blue], [blue]maintained social engagement[/blue], and [blue]less sensory deprivation–driven atrophy[/blue].",
+      "- Observational and interventional data show **lower incident dementia risk** among consistent hearing-aid users versus nonusers.",
+      "- [yellow]Prevention pearl:[/yellow] In midlife risk counseling, **treat hearing loss early** alongside vascular risk control. 👂🧠",
+      "**2️⃣ Why the other options are wrong**",
+      "- **A. BP control:** Hypertension is important for dementia prevention, but **hearing loss** contributes a larger modifiable share in midlife; still manage BP aggressively for brain and heart.",
+      "- **C. Statin regardless of risk:** Use statins per **ASCVD indications**; evidence does **not** support statins as a primary anti-Alzheimer therapy.",
+      "- **D. Diet/exercise:** Powerful for overall brain health and vascular risk, yet **hearing intervention** targets a uniquely strong nonvascular pathway and has large attributable impact.",
+      "- **E. Smoking cessation:** Always recommended; smoking raises vascular dementia and overall risk, but **midlife hearing loss** remains the higher-yield modifiable lever in this scenario.",
+      "**3️⃣ Investigations / Diagnostic Steps (in order)**",
+      "- **Initial Diagnostic step:** Structured **risk review**: age, family history, education, **hearing screen**, vascular/metabolic profile, sleep, depression, alcohol, activity, social ties. Confirms? ❌ Risk stratifies; no dementia yet.",
+      "- **Next Diagnostic step:** **Formal audiology** (pure-tone audiometry, speech discrimination) → quantify loss and fit **hearing aids**. Confirms? ➕ Enables targeted intervention.",
+      "- **Best Diagnostic Step (if cognitive concern emerges):** **Cognitive screening** (MoCA) and **MRI brain** for patterns of atrophy; **CSF or amyloid/tau PET** only if symptomatic and diagnosis uncertain. Confirms? ✅ For symptomatic cases.",
+      "**4️⃣ Management / Treatment (in order)**",
+      "- **Initial Management:** [green]Treat hearing loss[/green] with **hearing aids + auditory rehab**; encourage **consistent daily use** and device troubleshooting.",
+      "- **First Line (bundle other modifiable risks):** [green]BP <130/80, DM control (A1c individualized), smoking cessation, Mediterranean diet, 150–300 min/wk aerobic exercise, strength training, sleep apnea screening, depression treatment, social engagement**.",
+      "- **Gold Standard (prevention reality):** No pill cures risk; [green]multidomain risk reduction over years[/green] has the best evidence; monitor adherence and adjust barriers. [purple]Mnemonic: “**HEAR VITALS**” — **Hear**ing, **V**ascular, **I**nflammation, **T**rauma, **A**ctivity, **L**earning (cognitive), **S**leep[/purple].",
+      "**5️⃣ Full Pathophysiology Explained**",
+      "- **Alzheimer biology** = **amyloid-β plaques** and **tau tangles**; risk is shaped by **age**, **genetics (APOE ε4)**, and **lifetime exposures**.",
+      "- **Hearing loss → cognitive load**: brain reallocates resources to decode sound, reducing encoding capacity and promoting network inefficiency.",
+      "- **Sensory deprivation** accelerates **temporal/hippocampal atrophy** and **social isolation**, both linked to cognitive decline.",
+      "- **Vascular factors** (HTN, diabetes, smoking) add [blue]ischemic/white-matter injury[/blue] and neuroinflammation, synergizing with AD pathology.",
+      "- [yellow]Upstream wins[/yellow] come from **multi-domain modification**, with **hearing** a centerpiece in midlife.",
+      "**6️⃣ Symptoms — risk → phenotype mapping**",
+      "- **Untreated hearing loss** 👂 → social withdrawal, miscommunication, cognitive load → later **amnestic decline**.",
+      "- **Hypertension/diabetes/smoking** 💢 → microvascular disease → **processing speed/executive** deficits → worsened AD trajectory.",
+      "- **Low activity + isolation** 🛋️ → reduced cognitive reserve → earlier clinical expression of pathology.",
+      "- **Family history/APOE ε4** 🧬 → higher baseline risk; modifiable factors still shift **onset and slope**.",
+      "- [blue]Pattern to remember:[/blue] ==In midlife prevention counseling, **treat hearing loss first**, then stack vascular, lifestyle, sleep, and mood strategies==",
     ],
   },
 ];
@@ -1096,7 +797,6 @@ function Calculator() {
 
 /* ----------------------- Responsive helpers ---------------------- */
 function useIsMobile(breakpoint = 768) {
-  // md = 768px
   const [mobile, setMobile] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth < breakpoint : false
   );
@@ -1109,7 +809,6 @@ function useIsMobile(breakpoint = 768) {
   return mobile;
 }
 
-/* A mobile question list rendered in a modal (instead of a fixed sidebar) */
 function MobileQuestionList({
   open,
   onClose,
@@ -1156,7 +855,7 @@ function MobileQuestionList({
                 <div className="min-w-0">
                   <p className="font-medium">Q{i + 1}</p>
                   <p className="text-sm text-slate-600 truncate">
-                    {QUESTIONS[qi].stem}
+                    {QUESTIONS[qi].stem.replace(/<[^>]*>/g, "")}
                   </p>
                   <div className="mt-2 flex gap-2">
                     <span className="text-xs rounded-full bg-purple-100 text-purple-700 px-2 py-0.5">
@@ -1185,12 +884,112 @@ function MobileQuestionList({
   );
 }
 
+/* ---------------------- Results Modal ---------------------- */
+function ResultsModal({ open, onClose, answers, order, elapsedMs, jumpTo }) {
+  const total = order.length;
+  const score = useMemo(
+    () =>
+      order.reduce(
+        (s, qi) =>
+          s + (answers[QUESTIONS[qi].id] === QUESTIONS[qi].correct ? 1 : 0),
+        0
+      ),
+    [answers, order]
+  );
+  const pct = Math.round((score / Math.max(total, 1)) * 100);
+  const wrong = useMemo(
+    () =>
+      order
+        .map((qi, i) => ({
+          i,
+          q: QUESTIONS[qi],
+          chosen: answers[QUESTIONS[qi].id],
+        }))
+        .filter(({ q, chosen }) => chosen && chosen !== q.correct),
+    [answers, order]
+  );
+  const mm = Math.floor(elapsedMs / 60000);
+  const ss = Math.floor((elapsedMs % 60000) / 1000);
+
+  return (
+    <Modal open={open} onClose={onClose} title="Results" maxW="max-w-2xl">
+      <div className="space-y-4">
+        <div className="grid sm:grid-cols-3 gap-3">
+          <div className="rounded-xl border p-4">
+            <p className="text-sm text-slate-600">Marks</p>
+            <p className="text-2xl font-bold">
+              {score} / {total}
+            </p>
+          </div>
+          <div className="rounded-xl border p-4">
+            <p className="text-sm text-slate-600">Percentage</p>
+            <p className="text-2xl font-bold">{pct}%</p>
+          </div>
+          <div className="rounded-xl border p-4">
+            <p className="text-sm text-slate-600">Time</p>
+            <p className="text-2xl font-bold">
+              {mm}m {ss}s
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border p-4">
+          <p className="font-semibold mb-2">Questions to review</p>
+          {wrong.length === 0 ? (
+            <p className="text-slate-600 text-sm">
+              Nice — no incorrect answers 🎉
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {wrong.map(({ i, q, chosen }) => (
+                <li
+                  key={q.id}
+                  className="flex items-start justify-between gap-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">
+                      Q{i + 1} — {q.vignetteTitle || "Vignette"}
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      Chosen: <span className="font-semibold">{chosen}</span> •
+                      Correct:{" "}
+                      <span className="font-semibold">{q.correct}</span>
+                    </p>
+                  </div>
+                  <button
+                    className="shrink-0 rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-50"
+                    onClick={() => {
+                      jumpTo(i);
+                      onClose();
+                    }}
+                  >
+                    Go to question →
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="rounded-lg border px-4 py-2 hover:bg-slate-50"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 /* --------------------------- Page --------------------------- */
 export default function DementiaAlzheimers() {
   const nav = useNavigate();
   const isMobile = useIsMobile();
 
-  // session/order state
+  // session/order
   const [order, setOrder] = useState(QUESTIONS.map((_, i) => i));
   const [started, setStarted] = useState(false);
 
@@ -1201,6 +1000,11 @@ export default function DementiaAlzheimers() {
   const [revealed, setRevealed] = useState({});
   const [showLabs, setShowLabs] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+
+  // timing
+  const startRef = useRef(null);
+  const endRef = useRef(null);
 
   // highlighting
   const [highlightMode, setHighlightMode] = useState(false);
@@ -1210,6 +1014,7 @@ export default function DementiaAlzheimers() {
   const total = QUESTIONS.length;
   const progress = ((currentIdx + 1) / Math.max(total, 1)) * 100;
 
+  /* highlight selection */
   const applySelectionHighlight = () => {
     const root = highlightRef.current;
     if (!root) return;
@@ -1248,7 +1053,7 @@ export default function DementiaAlzheimers() {
     });
   };
 
-  // start overlay pick
+  /* start mode */
   const handlePickMode = (mode) => {
     const newOrder =
       mode === "random"
@@ -1259,9 +1064,11 @@ export default function DementiaAlzheimers() {
     setAnswers({});
     setRevealed({});
     setStarted(true);
+    startRef.current = Date.now();
+    endRef.current = null;
   };
 
-  // keyboard navigation
+  /* keyboard nav */
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "ArrowRight" && currentIdx < total - 1)
@@ -1272,11 +1079,26 @@ export default function DementiaAlzheimers() {
     return () => window.removeEventListener("keydown", onKey);
   }, [currentIdx, total]);
 
-  // actions
+  /* actions */
   const choose = (opt) => setAnswers((a) => ({ ...a, [q.id]: opt }));
   const submit = () => setRevealed((r) => ({ ...r, [q.id]: true }));
-  const next = () => currentIdx < total - 1 && setCurrentIdx((i) => i + 1);
+  const next = () => {
+    const last = currentIdx >= total - 1;
+    if (!last) setCurrentIdx((i) => i + 1);
+  };
   const prev = () => currentIdx > 0 && setCurrentIdx((i) => i - 1);
+
+  /* finished state */
+  const finished = currentIdx === total - 1 && !!revealed[q.id];
+  useEffect(() => {
+    if (finished && !endRef.current) endRef.current = Date.now();
+  }, [finished]);
+
+  const elapsedMs = useMemo(() => {
+    if (startRef.current == null) return 0;
+    const end = endRef.current || Date.now();
+    return Math.max(0, end - startRef.current);
+  }, [showResults, revealed, currentIdx]);
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -1308,7 +1130,7 @@ export default function DementiaAlzheimers() {
         </div>
       </header>
 
-      {/* Floating toggle: on mobile bottom-right; on desktop left edge */}
+      {/* Sidebar toggle: mobile bottom-right; desktop left edge */}
       <button
         onClick={() => setSidebarOpen((s) => !s)}
         className={[
@@ -1324,7 +1146,7 @@ export default function DementiaAlzheimers() {
       {/* Content Row */}
       <div className="mx-auto max-w-[1100px] px-2 md:px-4 py-4">
         <div className="relative">
-          {/* Desktop slide-out Sidebar */}
+          {/* Desktop sidebar */}
           <aside
             className={[
               "hidden md:block",
@@ -1380,7 +1202,7 @@ export default function DementiaAlzheimers() {
                         <div className="min-w-0">
                           <p className="font-medium">Q{i + 1}</p>
                           <p className="text-sm text-slate-600 truncate">
-                            {qq.stem}
+                            {qq.stem.replace(/<[^>]*>/g, "")}
                           </p>
                           <div className="mt-2 flex gap-2">
                             <span className="text-xs rounded-full bg-purple-100 text-purple-700 px-2 py-0.5">
@@ -1488,7 +1310,9 @@ export default function DementiaAlzheimers() {
                             name={`ans-${q.id}`}
                             className="h-4 w-4 text-purple-600"
                             checked={chosen === opt.key}
-                            onChange={() => choose(opt.key)}
+                            onChange={() =>
+                              setAnswers((a) => ({ ...a, [q.id]: opt.key }))
+                            }
                             disabled={revealedThis}
                           />
                           <span className="text-[15px]">
@@ -1536,23 +1360,30 @@ export default function DementiaAlzheimers() {
                         >
                           ← Previous
                         </button>
+                        {currentIdx === total - 1 && (
+                          <button
+                            onClick={() => setShowResults(true)}
+                            className="rounded-xl border px-4 py-2 hover:bg-slate-50"
+                          >
+                            Results
+                          </button>
+                        )}
                       </>
                     )}
                   </div>
 
-                  {/* Explanation (single card) */}
+                  {/* Explanation */}
                   {revealed[q.id] && (
                     <div className="mt-2">
-                      <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
                         <p className="font-semibold text-slate-900 mb-2">
                           Explanation
                         </p>
                         <div className="space-y-2 text-slate-800">
                           {q.explanation_detail?.map((para, i) => (
-                            <p
-                              key={i}
-                              dangerouslySetInnerHTML={{ __html: para }}
-                            />
+                            <p key={i} className="leading-relaxed">
+                              <RichText text={para} />
+                            </p>
                           ))}
                         </div>
                       </div>
@@ -1561,7 +1392,7 @@ export default function DementiaAlzheimers() {
                 </div>
               </div>
 
-              {/* Right tool rail */}
+              {/* Right tool rail (desktop only) */}
               <div className="fixed right-4 top-[140px] md:flex md:flex-col md:gap-3 hidden">
                 <button
                   title="Calculator"
@@ -1617,7 +1448,7 @@ export default function DementiaAlzheimers() {
         <Calculator />
       </Modal>
 
-      {/* Mobile question list modal */}
+      {/* Mobile question list */}
       <MobileQuestionList
         open={isMobile && sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -1627,7 +1458,21 @@ export default function DementiaAlzheimers() {
         answers={answers}
       />
 
-      {/* Start choice (solid white overlay) */}
+      {/* Results */}
+      <ResultsModal
+        open={showResults}
+        onClose={() => setShowResults(false)}
+        answers={answers}
+        order={order}
+        elapsedMs={(() => {
+          if (startRef.current == null) return 0;
+          const end = endRef.current || Date.now();
+          return Math.max(0, end - startRef.current);
+        })()}
+        jumpTo={(i) => setCurrentIdx(i)}
+      />
+
+      {/* Start overlay */}
       <StartOverlay open={!started} onPick={handlePickMode} />
     </div>
   );
