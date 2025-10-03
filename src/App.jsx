@@ -42,6 +42,8 @@ import VascularDementia from "./pages/diseases/geriatrics/VascularDementia.jsx";
 import DementiaLewyBodies from "./pages/diseases/geriatrics/DementiaLewyBodies.jsx";
 import FrontotemporalDementia from "./pages/diseases/geriatrics/FrontotemporalDementia.jsx";
 import Delirium from "./pages/diseases/geriatrics/Delirium.jsx";
+import ParkinsonsDisease from "./pages/diseases/geriatrics/ParkinsonsDisease.jsx";
+import StrokeTIA from "./pages/diseases/geriatrics/StrokeTIA.jsx";
 
 export default function App() {
   return (
@@ -100,6 +102,11 @@ export default function App() {
         element={<FrontotemporalDementia />}
       />
       <Route path="/diseases/geriatrics/delirium" element={<Delirium />} />
+      <Route
+        path="/diseases/geriatrics/parkinsons-disease"
+        element={<ParkinsonsDisease />}
+      />
+      <Route path="/diseases/geriatrics/stroke-tia" element={<StrokeTIA />} />
     </Routes>
   );
 }
