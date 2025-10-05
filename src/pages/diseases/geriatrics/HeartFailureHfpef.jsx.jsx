@@ -1,29 +1,21 @@
-// src/pages/diseases/geriatrics/COPD.jsx
-import React, { useMemo, useRef, useState, useEffect } from "react";
+// src/pages/diseases/geriatrics/HeartFailureHfpef.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-/** ========== Inline RichText (bold/italic + colored highlights) ========== */
+/** ---------- Rich text with bold/italic + colored chips ---------- */
 function RichText({ text = "" }) {
   let html = String(text);
-
-  // escape raw <, >, &, but keep our markers
   html = html
     .replace(/&(?![a-zA-Z#0-9]+;)/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
-
-  // **bold** and *italic* or _italic_
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/(^|[^*])\*(?!\*)(.+?)\*(?!\*)/g, "$1<em>$2</em>");
   html = html.replace(/_(.+?)_/g, "<em>$1</em>");
-
-  // ==highlight== (yellow)
   html = html.replace(
     /==(.+?)==/g,
-    "<mark style='background-color:#FEF3C7' class='px-1 rounded'>$1</mark>"
+    "<mark style='background:#FEF3C7' class='px-1 rounded'>$1</mark>"
   );
-
-  // [green]...[/green], [blue]...[/blue], etc.
   const colors = {
     yellow: "#FEF3C7",
     green: "#D1FAE5",
@@ -35,11 +27,9 @@ function RichText({ text = "" }) {
     const re = new RegExp(`\\[${name}\\]([\\s\\S]+?)\\[\\/${name}\\]`, "gi");
     html = html.replace(
       re,
-      `<mark style="background-color:${bg}" class="px-1 rounded">$1</mark>`
+      `<mark style="background:${bg}" class="px-1 rounded">$1</mark>`
     );
   });
-
-  // unescape the tags we intentionally created
   html = html
     .replace(/&lt;strong&gt;/g, "<strong>")
     .replace(/&lt;\/strong&gt;/g, "</strong>")
@@ -47,109 +37,122 @@ function RichText({ text = "" }) {
     .replace(/&lt;\/em&gt;/g, "</em>")
     .replace(/&lt;mark /g, "<mark ")
     .replace(/&lt;\/mark&gt;/g, "</mark>");
-
   return <span dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 /* ============================ Question Data ============================ */
 const QUESTIONS = [
   {
-    id: "COPD-2001",
-    topic: "Geriatrics • COPD",
+    id: "HFPEF-3001",
+    topic: "Geriatrics • Heart failure (HFpEF)",
     difficulty: "Easy",
-    vignetteTitle: "Initial assessment",
+    vignetteTitle: "Definition",
     stem:
-      "A 76-year-old ex-smoker presents with chronic cough and exertional dyspnoea. " +
-      "Post-bronchodilator spirometry shows FEV₁/FVC = 0.60. Which SINGLE result confirms airflow obstruction due to COPD?",
+      "An 82-year-old woman with hypertension and obesity presents with exertional dyspnoea and ankle swelling. " +
+      "Echo shows LVEF 55%, concentric LVH, LA dilation. Which SINGLE statement best defines HFpEF?",
     options: [
-      { key: "A", text: "FEV₁/FVC ≥ 0.70 after bronchodilator" },
-      { key: "B", text: "FEV₁/FVC &lt; 0.70 after bronchodilator" }, // correct
-      { key: "C", text: "Raised DLCO" },
+      { key: "A", text: "Symptoms/signs of HF with LVEF < 40%" },
       {
-        key: "D",
-        text: "FVC increase &gt; 12% and 200 mL after bronchodilator",
-      },
-      { key: "E", text: "Peak flow variability &gt; 20%" },
+        key: "B",
+        text: "Symptoms/signs of HF with LVEF ≥ 50% and objective diastolic dysfunction",
+      }, // correct
+      { key: "C", text: "Any dyspnoea with normal BNP" },
+      { key: "D", text: "Pulmonary oedema with reduced EF only" },
+      { key: "E", text: "LV dilation with EF ≥ 60%" },
     ],
     correct: "B",
     explanation_detail: [
-      "**Diagnosis:** COPD is confirmed by **post-bronchodilator FEV₁/FVC &lt; 0.70**. ",
-      "[blue]Asthma markers[/blue] like large bronchodilator reversibility (D) or peak-flow variability (E) suggest asthma; DLCO is often [yellow]low[/yellow] in emphysema, not raised.",
+      "HFpEF requires **HF symptoms/signs**, **LVEF ≥ 50%**, and **objective evidence of raised filling pressures/diastolic dysfunction** (e.g., LA enlargement, ↑E/e′, TR jet, elevated natriuretic peptides).",
+      "HFrEF is **EF < 40%**; HFmrEF 41–49%. BNP may be normal in obese patients, so normal BNP does not exclude HF in this phenotype.",
     ],
   },
   {
-    id: "COPD-2002",
-    topic: "Geriatrics • COPD",
+    id: "HFPEF-3002",
+    topic: "Geriatrics • HFpEF",
     difficulty: "Medium",
-    vignetteTitle: "Stable therapy ladder",
-    stem:
-      "A 79-year-old with confirmed COPD (FEV₁ 58% predicted) has persistent breathlessness despite using a short-acting bronchodilator PRN. " +
-      "No frequent exacerbations. What is the SINGLE most appropriate next step in maintenance therapy?",
+    vignetteTitle: "Typical comorbidities",
+    stem: "Which SINGLE cluster of comorbidities is most characteristic of HFpEF in older adults?",
     options: [
-      { key: "A", text: "Start inhaled corticosteroid (ICS) alone" },
-      { key: "B", text: "Start long-acting muscarinic antagonist (LAMA)" }, // correct
-      { key: "C", text: "Start oral theophylline" },
-      { key: "D", text: "Start long-term oral steroids" },
-      { key: "E", text: "Add prophylactic macrolide immediately" },
+      { key: "A", text: "Young male, prior MI, reduced EF" },
+      { key: "B", text: "Long-standing hypertension, obesity, diabetes, AF" }, // correct
+      { key: "C", text: "Valvular AR with Marfan syndrome" },
+      { key: "D", text: "Postpartum cardiomyopathy" },
+      { key: "E", text: "Chronic alcohol use with dilated LV" },
     ],
     correct: "B",
     explanation_detail: [
-      "For **symptomatic COPD without frequent exacerbations**, step up from SABA/SAMA to a **long-acting bronchodilator** — typically **LAMA** (e.g., tiotropium).",
-      "ICS is **not** first-line unless eosinophils high and/or **frequent exacerbations**; oral steroids/theophylline have limited roles and more adverse effects.",
+      "HFpEF is often a disease of **older, hypertensive, often female patients** with **obesity**, **T2DM**, **CKD**, and **atrial fibrillation**. Systemic inflammation and microvascular dysfunction drive **impaired relaxation and stiffness**.",
     ],
   },
   {
-    id: "COPD-2003",
-    topic: "Geriatrics • COPD",
+    id: "HFPEF-3003",
+    topic: "Geriatrics • HFpEF",
     difficulty: "Medium",
-    vignetteTitle: "Exacerbation bundle",
+    vignetteTitle: "First-line disease-modifying therapy",
     stem:
-      "An 82-year-old with COPD presents with ↑ dyspnoea, ↑ sputum volume and purulence. SpO₂ 86% on air. " +
-      "Which SINGLE immediate oxygen strategy is most appropriate in the ED?",
+      "A 78-year-old woman with HFpEF (EF 55%) has NYHA II dyspnoea. BNP elevated; eGFR 58. She is on optimized BP control (ACEi, thiazide). " +
+      "Which SINGLE medication provides **proven outcome benefit** in HFpEF?",
     options: [
-      { key: "A", text: "100% oxygen via non-rebreather mask" },
-      { key: "B", text: "Target sats 88–92% with controlled oxygen" }, // correct
-      { key: "C", text: "Room air only" },
-      { key: "D", text: "Hyperventilation coaching" },
-      { key: "E", text: "Immediate NIV for all COPD exacerbations" },
+      { key: "A", text: "Ivabradine" },
+      { key: "B", text: "SGLT2 inhibitor (e.g., empagliflozin)" }, // correct
+      { key: "C", text: "Verapamil" },
+      { key: "D", text: "Digoxin for everyone" },
+      { key: "E", text: "High-dose loop diuretic when euvolaemic" },
     ],
     correct: "B",
     explanation_detail: [
-      "[red]CO₂ retainers risk[/red]: give **controlled oxygen** to a target **88–92%** (e.g., Venturi mask) while assessing ABG. ",
-      "NIV is for **persistent hypercapnic acidotic respiratory failure** despite optimal therapy; 100% O₂ risks worsening hypercapnia.",
+      "[green]SGLT2 inhibitors[/green] reduce **HF hospitalization** across the EF spectrum (including HFpEF).",
+      "Loop diuretics are for **congestion relief**, not disease modification. Rate/rhythm control for AF and **tight BP control** are also key pillars.",
     ],
   },
   {
-    id: "COPD-2004",
-    topic: "Geriatrics • COPD",
+    id: "HFPEF-3004",
+    topic: "Geriatrics • HFpEF",
+    difficulty: "Medium",
+    vignetteTitle: "Acute management",
+    stem:
+      "An 84-year-old with HFpEF presents with acute pulmonary oedema: RR 32, SpO₂ 88% RA, BP 170/90, bilateral crackles, raised JVP. " +
+      "What is the SINGLE best **initial** management step?",
+    options: [
+      { key: "A", text: "High-flow oxygen titrated and IV loop diuretic" }, // correct
+      { key: "B", text: "Immediate IV fluids bolus 500 mL" },
+      { key: "C", text: "Start SGLT2 inhibitor in ED" },
+      { key: "D", text: "Long-term beta-blocker loading dose now" },
+      { key: "E", text: "Chest physiotherapy first" },
+    ],
+    correct: "A",
+    explanation_detail: [
+      "Treat **acute congestion**: titrated **oxygen**, **IV furosemide**, sit upright, consider **nitrates** if hypertensive, and **NIV** if persistent hypoxia. Avoid fluid bolus unless clear hypovolaemia.",
+    ],
+  },
+  {
+    id: "HFPEF-3005",
+    topic: "Geriatrics • HFpEF",
     difficulty: "Hard",
-    vignetteTitle: "When to add ICS",
-    stem:
-      "A 74-year-old with COPD on LAMA/LABA has ≥2 moderate exacerbations in the last year. Blood eosinophils 420/µL. " +
-      "What SINGLE change is most appropriate to reduce future exacerbations?",
+    vignetteTitle: "Echocardiography clues",
+    stem: "Which SINGLE echocardiographic finding most supports raised LV filling pressures typical of HFpEF?",
     options: [
-      { key: "A", text: "Withdraw bronchodilators and use ICS alone" },
-      { key: "B", text: "Add inhaled corticosteroid (triple therapy)" }, // correct
-      { key: "C", text: "Start long-term oral prednisolone" },
-      { key: "D", text: "Start theophylline as first add-on" },
-      { key: "E", text: "No change — eosinophils not relevant" },
+      { key: "A", text: "LV end-diastolic diameter markedly increased" },
+      { key: "B", text: "E/e′ ratio elevated with LA enlargement" }, // correct
+      { key: "C", text: "Global hypokinesia with EF 30%" },
+      { key: "D", text: "Severe RV dilation with TR" },
+      { key: "E", text: "Normal LA size with normal diastolic indices" },
     ],
     correct: "B",
     explanation_detail: [
-      "High **blood eosinophils** and **frequent exacerbations** → benefit from adding **ICS** (i.e., **triple therapy** LABA/LAMA/ICS).",
-      "Avoid chronic oral steroids; theophylline has narrow therapeutic window and limited benefit.",
+      "HFpEF shows **diastolic dysfunction**: ↑**E/e′**, **LA enlargement**, abnormal LV relaxation, concentric LVH. Marked LV dilation and EF 30% suggest HFrEF instead.",
     ],
   },
 ];
 
-/* ================================ Utils ================================ */
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
+/* =============================== Helpers =============================== */
+function shuffle(a) {
+  const b = [...a];
+  for (let i = b.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+    [b[i], b[j]] = [b[j], b[i]];
   }
-  return a;
+  return b;
 }
 function useIsMobile(bp = 768) {
   const [m, setM] = useState(() =>
@@ -162,8 +165,6 @@ function useIsMobile(bp = 768) {
   }, [bp]);
   return m;
 }
-
-/* =============================== Modals =============================== */
 function Modal({
   open,
   onClose,
@@ -195,8 +196,6 @@ function Modal({
     </div>
   );
 }
-
-/* ============== Mobile question list (uses modal instead of sidebar) ============== */
 function MobileQuestionList({
   open,
   onClose,
@@ -211,7 +210,7 @@ function MobileQuestionList({
         {order.map((qi, i) => {
           const q = QUESTIONS[qi];
           const a = answers[q.id];
-          const status = !a
+          const st = !a
             ? "unanswered"
             : a === q.correct
             ? "correct"
@@ -219,9 +218,9 @@ function MobileQuestionList({
           const ring =
             i === currentIdx
               ? "ring-2 ring-purple-300"
-              : status === "correct"
+              : st === "correct"
               ? "ring-2 ring-emerald-300"
-              : status === "incorrect"
+              : st === "incorrect"
               ? "ring-2 ring-rose-300"
               : "";
           return (
@@ -250,9 +249,9 @@ function MobileQuestionList({
                 </div>
                 <span
                   className={`mt-1 h-2 w-2 rounded-full ${
-                    status === "correct"
+                    st === "correct"
                       ? "bg-emerald-500"
-                      : status === "incorrect"
+                      : st === "incorrect"
                       ? "bg-rose-500"
                       : "bg-slate-300"
                   }`}
@@ -266,7 +265,7 @@ function MobileQuestionList({
   );
 }
 
-/* =============================== Results =============================== */
+/* ============================== Results =============================== */
 function ResultsView({
   answers,
   startedAt,
@@ -285,7 +284,6 @@ function ResultsView({
   const ms = Math.max(0, (endedAt || Date.now()) - (startedAt || Date.now()));
   const mins = Math.floor(ms / 60000);
   const secs = Math.round((ms % 60000) / 1000);
-
   const wrong = order.filter(
     (idx) =>
       answers[QUESTIONS[idx].id] &&
@@ -295,7 +293,7 @@ function ResultsView({
   return (
     <div className="mx-auto max-w-[900px] px-4 py-8">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl md:text-3xl font-extrabold">Results — COPD</h1>
+        <h1 className="text-2xl md:text-3xl font-extrabold">Results — HFpEF</h1>
         <div className="mt-4 grid sm:grid-cols-3 gap-4">
           <div className="rounded-xl border p-4">
             <p className="text-sm text-slate-600">Score</p>
@@ -318,7 +316,9 @@ function ResultsView({
         <div className="mt-6">
           <p className="font-semibold mb-2">Review incorrect questions</p>
           {wrong.length === 0 ? (
-            <p className="text-slate-600">Nice — nothing wrong this time 🎯</p>
+            <p className="text-slate-600">
+              Perfect score — nothing to review 🎯
+            </p>
           ) : (
             <ul className="space-y-2">
               {wrong.map((idx) => {
@@ -361,23 +361,20 @@ function ResultsView({
 }
 
 /* ================================ Page ================================ */
-export default function COPD() {
+export default function HeartFailureHfpef() {
   const isMobile = useIsMobile();
 
-  // session/order state
   const [order, setOrder] = useState(QUESTIONS.map((_, i) => i));
   const [started, setStarted] = useState(false);
   const [startedAt, setStartedAt] = useState(null);
   const [endedAt, setEndedAt] = useState(null);
   const [showResults, setShowResults] = useState(false);
 
-  // UI state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState({});
   const [revealed, setRevealed] = useState({});
 
-  // highlighting
   const [highlightMode, setHighlightMode] = useState(false);
   const highlightRef = useRef(null);
 
@@ -385,7 +382,6 @@ export default function COPD() {
   const total = QUESTIONS.length;
   const progress = ((currentIdx + 1) / Math.max(total, 1)) * 100;
 
-  // selection highlight
   useEffect(() => {
     if (!highlightMode) return;
     const handler = () => {
@@ -417,7 +413,6 @@ export default function COPD() {
     });
   };
 
-  // keyboard nav
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "ArrowRight" && currentIdx < total - 1)
@@ -428,7 +423,6 @@ export default function COPD() {
     return () => window.removeEventListener("keydown", onKey);
   }, [currentIdx, total]);
 
-  // start overlay choice
   const handleStart = (mode) => {
     const newOrder =
       mode === "random"
@@ -447,13 +441,11 @@ export default function COPD() {
   const submit = () => setRevealed((r) => ({ ...r, [q.id]: true }));
   const next = () => currentIdx < total - 1 && setCurrentIdx((i) => i + 1);
   const prev = () => currentIdx > 0 && setCurrentIdx((i) => i - 1);
-
   const onEndSession = () => {
     setEndedAt(Date.now());
-    setShowResults(true); // <- open results instead of navigating elsewhere
+    setShowResults(true);
   };
 
-  // if results requested
   if (showResults) {
     return (
       <ResultsView
@@ -500,20 +492,20 @@ export default function COPD() {
         </div>
       </header>
 
-      {/* Sidebar toggle: mobile shows FAB at bottom-right; desktop shows left chevron */}
+      {/* Toggle button (FAB on mobile, chevron on desktop) */}
       <button
         onClick={() => setSidebarOpen((s) => !s)}
         className={[
           "fixed z-50 h-10 w-10 rounded-xl shadow-sm border bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-all",
-          isMobile ? "right-4 bottom-20" : "top-[120px]",
+          useIsMobile() ? "right-4 bottom-20" : "top-[120px]",
         ].join(" ")}
-        style={isMobile ? {} : { left: sidebarOpen ? 316 : 12 }}
+        style={useIsMobile() ? {} : { left: sidebarOpen ? 316 : 12 }}
         title={sidebarOpen ? "Hide questions" : "Show questions"}
       >
         {sidebarOpen ? "‹" : "›"}
       </button>
 
-      {/* Layout */}
+      {/* Body */}
       <div className="mx-auto max-w-[1100px] px-2 md:px-4 py-4">
         <div className="relative">
           {/* Desktop sidebar */}
@@ -600,10 +592,10 @@ export default function COPD() {
             </div>
           </aside>
 
-          {/* Main column (adds padding when sidebar open on desktop) */}
+          {/* Main column */}
           <div
             className={`transition-all ${
-              sidebarOpen && !isMobile ? "md:pl-[320px]" : "ml-0"
+              sidebarOpen && !useIsMobile() ? "md:pl-[320px]" : "ml-0"
             }`}
           >
             <div className="mx-auto md:pr-[56px]">
@@ -632,6 +624,7 @@ export default function COPD() {
                     className="text-[15px] leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: q.stem }}
                   />
+
                   <div className="space-y-3">
                     {q.options.map((opt) => {
                       const chosen = answers[q.id];
@@ -673,9 +666,7 @@ export default function COPD() {
                     {!revealed[q.id] ? (
                       <>
                         <button
-                          onClick={() =>
-                            setRevealed((r) => ({ ...r, [q.id]: true }))
-                          }
+                          onClick={submit}
                           disabled={!answers[q.id]}
                           className="rounded-xl bg-purple-600 text-white px-4 py-2 disabled:opacity-50"
                         >
@@ -694,9 +685,7 @@ export default function COPD() {
                       <>
                         <button
                           onClick={
-                            currentIdx >= total - 1
-                              ? onEndSession
-                              : () => setCurrentIdx((i) => i + 1)
+                            currentIdx >= total - 1 ? onEndSession : next
                           }
                           className="rounded-xl bg-purple-600 text-white px-4 py-2"
                         >
@@ -705,9 +694,7 @@ export default function COPD() {
                             : "Next Question →"}
                         </button>
                         <button
-                          onClick={() =>
-                            currentIdx > 0 && setCurrentIdx((i) => i - 1)
-                          }
+                          onClick={prev}
                           disabled={currentIdx === 0}
                           className="rounded-xl border px-4 py-2 hover:bg-slate-50"
                         >
@@ -720,7 +707,7 @@ export default function COPD() {
                   {/* Explanation */}
                   {revealed[q.id] && (
                     <div className="mt-2">
-                      <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
                         <p className="font-semibold text-slate-900 mb-2">
                           Explanation
                         </p>
@@ -737,7 +724,7 @@ export default function COPD() {
                 </div>
               </div>
 
-              {/* Mobile tool buttons */}
+              {/* Mobile tools */}
               <div className="fixed md:hidden right-4 bottom-4 flex gap-2">
                 <button
                   title="Toggle highlight mode"
@@ -794,7 +781,7 @@ function StartOverlay({ open, onPick }) {
     <Modal
       open={open}
       onClose={() => {}}
-      title="Start COPD Question Bank"
+      title="Start HFpEF Question Bank"
       maxW="max-w-lg"
       overlayClass="bg-white"
     >

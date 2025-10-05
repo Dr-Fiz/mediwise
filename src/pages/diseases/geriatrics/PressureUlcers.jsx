@@ -1,29 +1,21 @@
-// src/pages/diseases/geriatrics/COPD.jsx
-import React, { useMemo, useRef, useState, useEffect } from "react";
+// src/pages/diseases/geriatrics/PressureUlcers.jsx
+import React, { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 /** ========== Inline RichText (bold/italic + colored highlights) ========== */
 function RichText({ text = "" }) {
   let html = String(text);
-
-  // escape raw <, >, &, but keep our markers
   html = html
     .replace(/&(?![a-zA-Z#0-9]+;)/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
-
-  // **bold** and *italic* or _italic_
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/(^|[^*])\*(?!\*)(.+?)\*(?!\*)/g, "$1<em>$2</em>");
   html = html.replace(/_(.+?)_/g, "<em>$1</em>");
-
-  // ==highlight== (yellow)
   html = html.replace(
     /==(.+?)==/g,
     "<mark style='background-color:#FEF3C7' class='px-1 rounded'>$1</mark>"
   );
-
-  // [green]...[/green], [blue]...[/blue], etc.
   const colors = {
     yellow: "#FEF3C7",
     green: "#D1FAE5",
@@ -38,8 +30,6 @@ function RichText({ text = "" }) {
       `<mark style="background-color:${bg}" class="px-1 rounded">$1</mark>`
     );
   });
-
-  // unescape the tags we intentionally created
   html = html
     .replace(/&lt;strong&gt;/g, "<strong>")
     .replace(/&lt;\/strong&gt;/g, "</strong>")
@@ -47,97 +37,111 @@ function RichText({ text = "" }) {
     .replace(/&lt;\/em&gt;/g, "</em>")
     .replace(/&lt;mark /g, "<mark ")
     .replace(/&lt;\/mark&gt;/g, "</mark>");
-
   return <span dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 /* ============================ Question Data ============================ */
 const QUESTIONS = [
   {
-    id: "COPD-2001",
-    topic: "Geriatrics • COPD",
+    id: "PU-3001",
+    topic: "Geriatrics • Pressure ulcers",
     difficulty: "Easy",
-    vignetteTitle: "Initial assessment",
-    stem:
-      "A 76-year-old ex-smoker presents with chronic cough and exertional dyspnoea. " +
-      "Post-bronchodilator spirometry shows FEV₁/FVC = 0.60. Which SINGLE result confirms airflow obstruction due to COPD?",
+    vignetteTitle: "Staging fundamentals",
+    stem: "An 84-year-old, bedbound patient has a persistent red area over the sacrum that does not blanch with fingertip pressure. Skin is intact. What is the SINGLE best stage classification?",
     options: [
-      { key: "A", text: "FEV₁/FVC ≥ 0.70 after bronchodilator" },
-      { key: "B", text: "FEV₁/FVC &lt; 0.70 after bronchodilator" }, // correct
-      { key: "C", text: "Raised DLCO" },
+      { key: "A", text: "Stage 1" }, // correct
+      { key: "B", text: "Stage 2" },
+      { key: "C", text: "Stage 3" },
+      { key: "D", text: "Stage 4" },
+      { key: "E", text: "Unstageable" },
+    ],
+    correct: "A",
+    explanation_detail: [
+      "**Stage 1** = **intact skin** with **non-blanchable erythema** of a localized area.",
+      "Stage 2 = **partial-thickness**; Stage 3 = **full-thickness** with fat; Stage 4 = **bone/tendon/muscle** exposure; **Unstageable** = base obscured by slough/eschar.",
+    ],
+  },
+  {
+    id: "PU-3002",
+    topic: "Geriatrics • Pressure ulcers",
+    difficulty: "Medium",
+    vignetteTitle: "Prevention bundle",
+    stem: "A 79-year-old with advanced dementia is admitted after a hip fracture repair. Braden score is low. Which SINGLE intervention is the cornerstone of prevention?",
+    options: [
+      { key: "A", text: "High-dose vitamin C for all" },
       {
-        key: "D",
-        text: "FVC increase &gt; 12% and 200 mL after bronchodilator",
+        key: "B",
+        text: "Reposition at least every 2 hours and offload pressure",
+      }, // correct
+      { key: "C", text: "Topical antiseptics to sacrum twice daily" },
+      { key: "D", text: "Prophylactic systemic antibiotics" },
+      { key: "E", text: "Daily debridement regardless of skin status" },
+    ],
+    correct: "B",
+    explanation_detail: [
+      "Core prevention: **regular repositioning (≈ q2h)**, **offloading** bony prominences, and **support surfaces**.",
+      "[blue]Adjuncts[/blue]: moisture management, nutrition, reduce shear/friction.",
+    ],
+  },
+  {
+    id: "PU-3003",
+    topic: "Geriatrics • Pressure ulcers",
+    difficulty: "Medium",
+    vignetteTitle: "Dressings 101",
+    stem: "A Stage 2 ulcer over the greater trochanter shows shallow partial-thickness loss with a clean pink base and minimal exudate. Which SINGLE dressing approach is most appropriate?",
+    options: [
+      { key: "A", text: "Dry gauze changed q2h" },
+      {
+        key: "B",
+        text: "Hydrocolloid or foam to maintain moist wound healing",
+      }, // correct
+      { key: "C", text: "Full-thickness surgical excision" },
+      { key: "D", text: "Caustic antiseptic daily until black" },
+      {
+        key: "E",
+        text: "Negative pressure wound therapy (default first line)",
       },
-      { key: "E", text: "Peak flow variability &gt; 20%" },
     ],
     correct: "B",
     explanation_detail: [
-      "**Diagnosis:** COPD is confirmed by **post-bronchodilator FEV₁/FVC &lt; 0.70**. ",
-      "[blue]Asthma markers[/blue] like large bronchodilator reversibility (D) or peak-flow variability (E) suggest asthma; DLCO is often [yellow]low[/yellow] in emphysema, not raised.",
+      "For **Stage 2**, aim for a **moist wound environment**: **hydrocolloid** or **thin foam** works for shallow depth and low exudate.",
+      "NPWT is better for **deeper** wounds with moderate/heavy exudate.",
     ],
   },
   {
-    id: "COPD-2002",
-    topic: "Geriatrics • COPD",
-    difficulty: "Medium",
-    vignetteTitle: "Stable therapy ladder",
-    stem:
-      "A 79-year-old with confirmed COPD (FEV₁ 58% predicted) has persistent breathlessness despite using a short-acting bronchodilator PRN. " +
-      "No frequent exacerbations. What is the SINGLE most appropriate next step in maintenance therapy?",
-    options: [
-      { key: "A", text: "Start inhaled corticosteroid (ICS) alone" },
-      { key: "B", text: "Start long-acting muscarinic antagonist (LAMA)" }, // correct
-      { key: "C", text: "Start oral theophylline" },
-      { key: "D", text: "Start long-term oral steroids" },
-      { key: "E", text: "Add prophylactic macrolide immediately" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "For **symptomatic COPD without frequent exacerbations**, step up from SABA/SAMA to a **long-acting bronchodilator** — typically **LAMA** (e.g., tiotropium).",
-      "ICS is **not** first-line unless eosinophils high and/or **frequent exacerbations**; oral steroids/theophylline have limited roles and more adverse effects.",
-    ],
-  },
-  {
-    id: "COPD-2003",
-    topic: "Geriatrics • COPD",
-    difficulty: "Medium",
-    vignetteTitle: "Exacerbation bundle",
-    stem:
-      "An 82-year-old with COPD presents with ↑ dyspnoea, ↑ sputum volume and purulence. SpO₂ 86% on air. " +
-      "Which SINGLE immediate oxygen strategy is most appropriate in the ED?",
-    options: [
-      { key: "A", text: "100% oxygen via non-rebreather mask" },
-      { key: "B", text: "Target sats 88–92% with controlled oxygen" }, // correct
-      { key: "C", text: "Room air only" },
-      { key: "D", text: "Hyperventilation coaching" },
-      { key: "E", text: "Immediate NIV for all COPD exacerbations" },
-    ],
-    correct: "B",
-    explanation_detail: [
-      "[red]CO₂ retainers risk[/red]: give **controlled oxygen** to a target **88–92%** (e.g., Venturi mask) while assessing ABG. ",
-      "NIV is for **persistent hypercapnic acidotic respiratory failure** despite optimal therapy; 100% O₂ risks worsening hypercapnia.",
-    ],
-  },
-  {
-    id: "COPD-2004",
-    topic: "Geriatrics • COPD",
+    id: "PU-3004",
+    topic: "Geriatrics • Pressure ulcers",
     difficulty: "Hard",
-    vignetteTitle: "When to add ICS",
-    stem:
-      "A 74-year-old with COPD on LAMA/LABA has ≥2 moderate exacerbations in the last year. Blood eosinophils 420/µL. " +
-      "What SINGLE change is most appropriate to reduce future exacerbations?",
+    vignetteTitle: "Debridement decisions",
+    stem: "An immobile 88-year-old with peripheral arterial disease has a dry, stable eschar on the heel without surrounding erythema, drainage, or fluctuance. What is the SINGLE best management?",
     options: [
-      { key: "A", text: "Withdraw bronchodilators and use ICS alone" },
-      { key: "B", text: "Add inhaled corticosteroid (triple therapy)" }, // correct
-      { key: "C", text: "Start long-term oral prednisolone" },
-      { key: "D", text: "Start theophylline as first add-on" },
-      { key: "E", text: "No change — eosinophils not relevant" },
+      { key: "A", text: "Sharp debridement immediately" },
+      { key: "B", text: "Keep eschar intact and offload heel" }, // correct
+      { key: "C", text: "Daily wet-to-dry dressings to remove eschar" },
+      { key: "D", text: "Empiric IV antibiotics for 7 days" },
+      { key: "E", text: "Topical iodine under occlusion" },
     ],
     correct: "B",
     explanation_detail: [
-      "High **blood eosinophils** and **frequent exacerbations** → benefit from adding **ICS** (i.e., **triple therapy** LABA/LAMA/ICS).",
-      "Avoid chronic oral steroids; theophylline has narrow therapeutic window and limited benefit.",
+      "For **stable, dry heel eschar** with no infection/ischemia, **do not debride**; it functions as a biologic dressing. **Offload** and monitor.",
+    ],
+  },
+  {
+    id: "PU-3005",
+    topic: "Geriatrics • Pressure ulcers",
+    difficulty: "Medium",
+    vignetteTitle: "When to suspect osteomyelitis",
+    stem: "A chronic Stage 4 sacral ulcer shows exposed bone and malodor. Inflammatory markers are elevated. Which SINGLE investigation best confirms osteomyelitis?",
+    options: [
+      { key: "A", text: "Plain X-ray alone" },
+      { key: "B", text: "Superficial swab culture" },
+      { key: "C", text: "Bone biopsy (histology ± culture)" }, // correct
+      { key: "D", text: "ESR/CRP trend only" },
+      { key: "E", text: "Probe-to-bone test alone" },
+    ],
+    correct: "C",
+    explanation_detail: [
+      "Definitive diagnosis is **bone biopsy** (histology ± culture). X-ray is insensitive early; swabs reflect surface flora.",
     ],
   },
 ];
@@ -163,7 +167,7 @@ function useIsMobile(bp = 768) {
   return m;
 }
 
-/* =============================== Modals =============================== */
+/* =============================== Modal =============================== */
 function Modal({
   open,
   onClose,
@@ -196,7 +200,7 @@ function Modal({
   );
 }
 
-/* ============== Mobile question list (uses modal instead of sidebar) ============== */
+/* ============== Mobile question list (modal) ============== */
 function MobileQuestionList({
   open,
   onClose,
@@ -266,7 +270,7 @@ function MobileQuestionList({
   );
 }
 
-/* =============================== Results =============================== */
+/* =============================== Results (inline, same file) =============================== */
 function ResultsView({
   answers,
   startedAt,
@@ -295,7 +299,9 @@ function ResultsView({
   return (
     <div className="mx-auto max-w-[900px] px-4 py-8">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl md:text-3xl font-extrabold">Results — COPD</h1>
+        <h1 className="text-2xl md:text-3xl font-extrabold">
+          Results — Pressure Ulcers
+        </h1>
         <div className="mt-4 grid sm:grid-cols-3 gap-4">
           <div className="rounded-xl border p-4">
             <p className="text-sm text-slate-600">Score</p>
@@ -361,7 +367,7 @@ function ResultsView({
 }
 
 /* ================================ Page ================================ */
-export default function COPD() {
+export default function PressureUlcers() {
   const isMobile = useIsMobile();
 
   // session/order state
@@ -443,17 +449,12 @@ export default function COPD() {
     setShowResults(false);
   };
 
-  const choose = (opt) => setAnswers((a) => ({ ...a, [q.id]: opt }));
-  const submit = () => setRevealed((r) => ({ ...r, [q.id]: true }));
-  const next = () => currentIdx < total - 1 && setCurrentIdx((i) => i + 1);
-  const prev = () => currentIdx > 0 && setCurrentIdx((i) => i - 1);
-
   const onEndSession = () => {
     setEndedAt(Date.now());
-    setShowResults(true); // <- open results instead of navigating elsewhere
+    setShowResults(true); // ← show the in-file ResultsView immediately
   };
 
-  // if results requested
+  // results short-circuit
   if (showResults) {
     return (
       <ResultsView
@@ -483,7 +484,7 @@ export default function COPD() {
             <span className="text-sm text-slate-600 whitespace-nowrap">
               Question {Math.min(currentIdx + 1, total)} of {total}
             </span>
-            <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-sLate-200 rounded-full overflow-hidden">
               <div
                 className="h-full bg-purple-500 rounded-full transition-all"
                 style={{ width: `${progress}%` }}
@@ -500,7 +501,7 @@ export default function COPD() {
         </div>
       </header>
 
-      {/* Sidebar toggle: mobile shows FAB at bottom-right; desktop shows left chevron */}
+      {/* Sidebar toggle (uses computed isMobile; no extra hook call) */}
       <button
         onClick={() => setSidebarOpen((s) => !s)}
         className={[
@@ -600,7 +601,7 @@ export default function COPD() {
             </div>
           </aside>
 
-          {/* Main column (adds padding when sidebar open on desktop) */}
+          {/* Main column */}
           <div
             className={`transition-all ${
               sidebarOpen && !isMobile ? "md:pl-[320px]" : "ml-0"
@@ -737,7 +738,7 @@ export default function COPD() {
                 </div>
               </div>
 
-              {/* Mobile tool buttons */}
+              {/* Mobile tools */}
               <div className="fixed md:hidden right-4 bottom-4 flex gap-2">
                 <button
                   title="Toggle highlight mode"
@@ -794,7 +795,7 @@ function StartOverlay({ open, onPick }) {
     <Modal
       open={open}
       onClose={() => {}}
-      title="Start COPD Question Bank"
+      title="Start Pressure Ulcers Question Bank"
       maxW="max-w-lg"
       overlayClass="bg-white"
     >

@@ -1,28 +1,24 @@
-// src/pages/diseases/geriatrics/COPD.jsx
-import React, { useMemo, useRef, useState, useEffect } from "react";
+// src/pages/diseases/geriatrics/CKD.jsx
+import React, { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 /** ========== Inline RichText (bold/italic + colored highlights) ========== */
 function RichText({ text = "" }) {
   let html = String(text);
-
-  // escape raw <, >, &, but keep our markers
+  // escape <, >, & but preserve our markers
   html = html
     .replace(/&(?![a-zA-Z#0-9]+;)/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
-
   // **bold** and *italic* or _italic_
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/(^|[^*])\*(?!\*)(.+?)\*(?!\*)/g, "$1<em>$2</em>");
   html = html.replace(/_(.+?)_/g, "<em>$1</em>");
-
   // ==highlight== (yellow)
   html = html.replace(
     /==(.+?)==/g,
     "<mark style='background-color:#FEF3C7' class='px-1 rounded'>$1</mark>"
   );
-
   // [green]...[/green], [blue]...[/blue], etc.
   const colors = {
     yellow: "#FEF3C7",
@@ -38,8 +34,7 @@ function RichText({ text = "" }) {
       `<mark style="background-color:${bg}" class="px-1 rounded">$1</mark>`
     );
   });
-
-  // unescape the tags we intentionally created
+  // unescape intended tags
   html = html
     .replace(/&lt;strong&gt;/g, "<strong>")
     .replace(/&lt;\/strong&gt;/g, "</strong>")
@@ -47,97 +42,137 @@ function RichText({ text = "" }) {
     .replace(/&lt;\/em&gt;/g, "</em>")
     .replace(/&lt;mark /g, "<mark ")
     .replace(/&lt;\/mark&gt;/g, "</mark>");
-
   return <span dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 /* ============================ Question Data ============================ */
 const QUESTIONS = [
   {
-    id: "COPD-2001",
-    topic: "Geriatrics • COPD",
+    id: "CKD-5001",
+    topic: "Geriatrics • Chronic kidney disease (CKD)",
     difficulty: "Easy",
-    vignetteTitle: "Initial assessment",
-    stem:
-      "A 76-year-old ex-smoker presents with chronic cough and exertional dyspnoea. " +
-      "Post-bronchodilator spirometry shows FEV₁/FVC = 0.60. Which SINGLE result confirms airflow obstruction due to COPD?",
+    vignetteTitle: "Definition (KDIGO)",
+    stem: "Which SINGLE statement best defines **CKD** according to KDIGO?",
     options: [
-      { key: "A", text: "FEV₁/FVC ≥ 0.70 after bronchodilator" },
-      { key: "B", text: "FEV₁/FVC &lt; 0.70 after bronchodilator" }, // correct
-      { key: "C", text: "Raised DLCO" },
-      {
-        key: "D",
-        text: "FVC increase &gt; 12% and 200 mL after bronchodilator",
-      },
-      { key: "E", text: "Peak flow variability &gt; 20%" },
+      { key: "A", text: "eGFR < 60 mL/min/1.73 m² at any single time point" },
+      { key: "B", text: "Any abnormal serum creatinine once" },
+      { key: "C", text: "Kidney damage markers or eGFR < 60 for ≥ 3 months" }, // correct
+      { key: "D", text: "Albuminuria alone regardless of duration" },
+      { key: "E", text: "Only structural abnormalities on imaging" },
     ],
-    correct: "B",
+    correct: "C",
     explanation_detail: [
-      "**Diagnosis:** COPD is confirmed by **post-bronchodilator FEV₁/FVC &lt; 0.70**. ",
-      "[blue]Asthma markers[/blue] like large bronchodilator reversibility (D) or peak-flow variability (E) suggest asthma; DLCO is often [yellow]low[/yellow] in emphysema, not raised.",
+      "**CKD** = **markers of kidney damage** (e.g., albuminuria, structural changes) **or eGFR &lt; 60**, **present for ≥ 3 months**.",
+      "A single low eGFR (A) may reflect AKI; duration matters.",
     ],
   },
   {
-    id: "COPD-2002",
-    topic: "Geriatrics • COPD",
+    id: "CKD-5002",
+    topic: "Geriatrics • Chronic kidney disease (CKD)",
     difficulty: "Medium",
-    vignetteTitle: "Stable therapy ladder",
-    stem:
-      "A 79-year-old with confirmed COPD (FEV₁ 58% predicted) has persistent breathlessness despite using a short-acting bronchodilator PRN. " +
-      "No frequent exacerbations. What is the SINGLE most appropriate next step in maintenance therapy?",
+    vignetteTitle: "Staging by eGFR",
+    stem: "A 78-year-old has eGFR 38 mL/min/1.73 m² for 6 months. Which SINGLE **G-stage** is correct?",
     options: [
-      { key: "A", text: "Start inhaled corticosteroid (ICS) alone" },
-      { key: "B", text: "Start long-acting muscarinic antagonist (LAMA)" }, // correct
-      { key: "C", text: "Start oral theophylline" },
-      { key: "D", text: "Start long-term oral steroids" },
-      { key: "E", text: "Add prophylactic macrolide immediately" },
+      { key: "A", text: "G1 (≥90)" },
+      { key: "B", text: "G2 (60–89)" },
+      { key: "C", text: "G3a (45–59)" },
+      { key: "D", text: "G3b (30–44)" }, // correct
+      { key: "E", text: "G4 (15–29)" },
     ],
-    correct: "B",
+    correct: "D",
     explanation_detail: [
-      "For **symptomatic COPD without frequent exacerbations**, step up from SABA/SAMA to a **long-acting bronchodilator** — typically **LAMA** (e.g., tiotropium).",
-      "ICS is **not** first-line unless eosinophils high and/or **frequent exacerbations**; oral steroids/theophylline have limited roles and more adverse effects.",
+      "KDIGO eGFR stages: **G1 ≥90**, **G2 60–89**, **G3a 45–59**, **G3b 30–44**, **G4 15–29**, **G5 &lt;15 or dialysis**.",
     ],
   },
   {
-    id: "COPD-2003",
-    topic: "Geriatrics • COPD",
+    id: "CKD-5003",
+    topic: "Geriatrics • Chronic kidney disease (CKD)",
     difficulty: "Medium",
-    vignetteTitle: "Exacerbation bundle",
-    stem:
-      "An 82-year-old with COPD presents with ↑ dyspnoea, ↑ sputum volume and purulence. SpO₂ 86% on air. " +
-      "Which SINGLE immediate oxygen strategy is most appropriate in the ED?",
+    vignetteTitle: "Albuminuria categories",
+    stem: "UACR is 220 mg/g (≈ 25 mg/mmol) on two occasions. Which SINGLE **A-category** applies?",
     options: [
-      { key: "A", text: "100% oxygen via non-rebreather mask" },
-      { key: "B", text: "Target sats 88–92% with controlled oxygen" }, // correct
-      { key: "C", text: "Room air only" },
-      { key: "D", text: "Hyperventilation coaching" },
-      { key: "E", text: "Immediate NIV for all COPD exacerbations" },
+      { key: "A", text: "A1: normal to mildly increased (&lt;30 mg/g)" },
+      { key: "B", text: "A2: moderately increased (30–300 mg/g)" }, // correct
+      { key: "C", text: "A3: severely increased (&gt;300 mg/g)" },
+      { key: "D", text: "Unclassified; UACR not used in CKD staging" },
+      { key: "E", text: "A3 if diabetic" },
     ],
     correct: "B",
     explanation_detail: [
-      "[red]CO₂ retainers risk[/red]: give **controlled oxygen** to a target **88–92%** (e.g., Venturi mask) while assessing ABG. ",
-      "NIV is for **persistent hypercapnic acidotic respiratory failure** despite optimal therapy; 100% O₂ risks worsening hypercapnia.",
+      "Albuminuria categories: **A1 &lt;30**, **A2 30–300**, **A3 &gt;300 mg/g**. These add prognostic weight alongside eGFR.",
     ],
   },
   {
-    id: "COPD-2004",
-    topic: "Geriatrics • COPD",
+    id: "CKD-5004",
+    topic: "Geriatrics • Chronic kidney disease (CKD)",
     difficulty: "Hard",
-    vignetteTitle: "When to add ICS",
-    stem:
-      "A 74-year-old with COPD on LAMA/LABA has ≥2 moderate exacerbations in the last year. Blood eosinophils 420/µL. " +
-      "What SINGLE change is most appropriate to reduce future exacerbations?",
+    vignetteTitle: "Renoprotective therapies",
+    stem: "An 80-year-old with CKD G3b A3 and type 2 diabetes is on maximally tolerated ACE inhibitor. Potassium is 4.7 mmol/L, eGFR 38. Which SINGLE **add-on** most reduces CKD progression and CV events?",
     options: [
-      { key: "A", text: "Withdraw bronchodilators and use ICS alone" },
-      { key: "B", text: "Add inhaled corticosteroid (triple therapy)" }, // correct
-      { key: "C", text: "Start long-term oral prednisolone" },
-      { key: "D", text: "Start theophylline as first add-on" },
-      { key: "E", text: "No change — eosinophils not relevant" },
+      { key: "A", text: "Add SGLT2 inhibitor (e.g., dapagliflozin)" }, // correct
+      { key: "B", text: "Start NSAID for osteoarthritis pain" },
+      { key: "C", text: "Add thiazolidinedione (pioglitazone) for kidneys" },
+      { key: "D", text: "Dual ACEi + ARB" },
+      { key: "E", text: "Stop ACEi if creatinine rises by any amount" },
+    ],
+    correct: "A",
+    explanation_detail: [
+      "**SGLT2 inhibitors** reduce CKD progression and CV events across eGFR ranges when albuminuria is present. ",
+      "[red]Avoid[/red] **dual ACEi/ARB**; **NSAIDs** accelerate nephropathy; a modest creatinine rise (&lt;30%) after ACEi start is expected.",
+    ],
+  },
+  {
+    id: "CKD-5005",
+    topic: "Geriatrics • Chronic kidney disease (CKD)",
+    difficulty: "Medium",
+    vignetteTitle: "Anemia of CKD",
+    stem: "A 76-year-old with CKD G4 has Hb 9.6 g/dL, ferritin 180 μg/L, TSAT 28% after IV iron repletion. Which SINGLE next step is most appropriate?",
+    options: [
+      { key: "A", text: "Start ESA (erythropoiesis-stimulating agent)" }, // correct
+      { key: "B", text: "Give more IV iron until ferritin &gt; 800 μg/L" },
+      { key: "C", text: "Transfuse 2 units PRBC routinely" },
+      { key: "D", text: "No action; target Hb &lt; 9 g/dL" },
+      { key: "E", text: "High-dose vitamin C" },
+    ],
+    correct: "A",
+    explanation_detail: [
+      "After **iron repletion**, consider **ESA** when **Hb persistently &lt;10 g/dL**, individualizing risks/benefits and avoiding Hb &gt;11.5–12.",
+    ],
+  },
+  {
+    id: "CKD-5006",
+    topic: "Geriatrics • Chronic kidney disease (CKD)",
+    difficulty: "Medium",
+    vignetteTitle: "Metformin in CKD",
+    stem: "A 74-year-old with T2DM and CKD has eGFR 34. Which SINGLE metformin plan is appropriate?",
+    options: [
+      { key: "A", text: "Continue usual dose; no change at any eGFR" },
+      { key: "B", text: "Reduce dose and monitor; stop if eGFR &lt;30" }, // correct
+      { key: "C", text: "Stop at eGFR &lt;60" },
+      { key: "D", text: "Increase dose to improve glycemic control" },
+      { key: "E", text: "Metformin is contraindicated in all CKD" },
     ],
     correct: "B",
     explanation_detail: [
-      "High **blood eosinophils** and **frequent exacerbations** → benefit from adding **ICS** (i.e., **triple therapy** LABA/LAMA/ICS).",
-      "Avoid chronic oral steroids; theophylline has narrow therapeutic window and limited benefit.",
+      "Most guidance: **review/reduce at eGFR 30–44**, **contraindicated &lt;30**; monitor for intercurrent illness/contrast exposures.",
+    ],
+  },
+  {
+    id: "CKD-5007",
+    topic: "Geriatrics • Chronic kidney disease (CKD)",
+    difficulty: "Medium",
+    vignetteTitle: "Mineral bone disorder (CKD-MBD)",
+    stem: "CKD G4 patient has persistent hyperphosphatemia despite diet. Which SINGLE measure is appropriate next?",
+    options: [
+      { key: "A", text: "Start phosphate binder with meals" }, // correct
+      { key: "B", text: "High-calcium supplements anytime" },
+      { key: "C", text: "No action; phosphate is unrelated to outcomes" },
+      { key: "D", text: "Stop vitamin D completely in all CKD" },
+      { key: "E", text: "Thiazide diuretic for phosphate control" },
+    ],
+    correct: "A",
+    explanation_detail: [
+      "CKD-MBD care: **dietary phosphate restriction**, then **binders** if persistent elevation; consider vitamin D analogs per PTH and Ca/PO₄ balance.",
     ],
   },
 ];
@@ -163,7 +198,7 @@ function useIsMobile(bp = 768) {
   return m;
 }
 
-/* =============================== Modals =============================== */
+/* =============================== Modal =============================== */
 function Modal({
   open,
   onClose,
@@ -196,7 +231,7 @@ function Modal({
   );
 }
 
-/* ============== Mobile question list (uses modal instead of sidebar) ============== */
+/* ============== Mobile question list (modal) ============== */
 function MobileQuestionList({
   open,
   onClose,
@@ -266,7 +301,7 @@ function MobileQuestionList({
   );
 }
 
-/* =============================== Results =============================== */
+/* =============================== Results (inline) =============================== */
 function ResultsView({
   answers,
   startedAt,
@@ -295,7 +330,8 @@ function ResultsView({
   return (
     <div className="mx-auto max-w-[900px] px-4 py-8">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl md:text-3xl font-extrabold">Results — COPD</h1>
+        <h1 className="text-2xl md:text-3xl font-extrabold">Results — CKD</h1>
+
         <div className="mt-4 grid sm:grid-cols-3 gap-4">
           <div className="rounded-xl border p-4">
             <p className="text-sm text-slate-600">Score</p>
@@ -318,7 +354,7 @@ function ResultsView({
         <div className="mt-6">
           <p className="font-semibold mb-2">Review incorrect questions</p>
           {wrong.length === 0 ? (
-            <p className="text-slate-600">Nice — nothing wrong this time 🎯</p>
+            <p className="text-slate-600">You aced it 🎯</p>
           ) : (
             <ul className="space-y-2">
               {wrong.map((idx) => {
@@ -361,7 +397,7 @@ function ResultsView({
 }
 
 /* ================================ Page ================================ */
-export default function COPD() {
+export default function CKD() {
   const isMobile = useIsMobile();
 
   // session/order state
@@ -443,17 +479,12 @@ export default function COPD() {
     setShowResults(false);
   };
 
-  const choose = (opt) => setAnswers((a) => ({ ...a, [q.id]: opt }));
-  const submit = () => setRevealed((r) => ({ ...r, [q.id]: true }));
-  const next = () => currentIdx < total - 1 && setCurrentIdx((i) => i + 1);
-  const prev = () => currentIdx > 0 && setCurrentIdx((i) => i - 1);
-
   const onEndSession = () => {
     setEndedAt(Date.now());
-    setShowResults(true); // <- open results instead of navigating elsewhere
+    setShowResults(true); // show inline results immediately
   };
 
-  // if results requested
+  // results short-circuit
   if (showResults) {
     return (
       <ResultsView
@@ -500,7 +531,7 @@ export default function COPD() {
         </div>
       </header>
 
-      {/* Sidebar toggle: mobile shows FAB at bottom-right; desktop shows left chevron */}
+      {/* Sidebar toggle */}
       <button
         onClick={() => setSidebarOpen((s) => !s)}
         className={[
@@ -600,7 +631,7 @@ export default function COPD() {
             </div>
           </aside>
 
-          {/* Main column (adds padding when sidebar open on desktop) */}
+          {/* Main column */}
           <div
             className={`transition-all ${
               sidebarOpen && !isMobile ? "md:pl-[320px]" : "ml-0"
@@ -737,7 +768,7 @@ export default function COPD() {
                 </div>
               </div>
 
-              {/* Mobile tool buttons */}
+              {/* Mobile tools */}
               <div className="fixed md:hidden right-4 bottom-4 flex gap-2">
                 <button
                   title="Toggle highlight mode"
@@ -794,7 +825,7 @@ function StartOverlay({ open, onPick }) {
     <Modal
       open={open}
       onClose={() => {}}
-      title="Start COPD Question Bank"
+      title="Start CKD Question Bank"
       maxW="max-w-lg"
       overlayClass="bg-white"
     >

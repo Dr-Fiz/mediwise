@@ -1,29 +1,21 @@
-// src/pages/diseases/geriatrics/COPD.jsx
-import React, { useMemo, useRef, useState, useEffect } from "react";
+// src/pages/diseases/geriatrics/Frailty.jsx
+import React, { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 /** ========== Inline RichText (bold/italic + colored highlights) ========== */
 function RichText({ text = "" }) {
   let html = String(text);
-
-  // escape raw <, >, &, but keep our markers
   html = html
     .replace(/&(?![a-zA-Z#0-9]+;)/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
-
-  // **bold** and *italic* or _italic_
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/(^|[^*])\*(?!\*)(.+?)\*(?!\*)/g, "$1<em>$2</em>");
   html = html.replace(/_(.+?)_/g, "<em>$1</em>");
-
-  // ==highlight== (yellow)
   html = html.replace(
     /==(.+?)==/g,
     "<mark style='background-color:#FEF3C7' class='px-1 rounded'>$1</mark>"
   );
-
-  // [green]...[/green], [blue]...[/blue], etc.
   const colors = {
     yellow: "#FEF3C7",
     green: "#D1FAE5",
@@ -38,8 +30,6 @@ function RichText({ text = "" }) {
       `<mark style="background-color:${bg}" class="px-1 rounded">$1</mark>`
     );
   });
-
-  // unescape the tags we intentionally created
   html = html
     .replace(/&lt;strong&gt;/g, "<strong>")
     .replace(/&lt;\/strong&gt;/g, "</strong>")
@@ -47,97 +37,131 @@ function RichText({ text = "" }) {
     .replace(/&lt;\/em&gt;/g, "</em>")
     .replace(/&lt;mark /g, "<mark ")
     .replace(/&lt;\/mark&gt;/g, "</mark>");
-
   return <span dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 /* ============================ Question Data ============================ */
 const QUESTIONS = [
   {
-    id: "COPD-2001",
-    topic: "Geriatrics • COPD",
+    id: "FR-4001",
+    topic: "Geriatrics • Frailty",
     difficulty: "Easy",
-    vignetteTitle: "Initial assessment",
-    stem:
-      "A 76-year-old ex-smoker presents with chronic cough and exertional dyspnoea. " +
-      "Post-bronchodilator spirometry shows FEV₁/FVC = 0.60. Which SINGLE result confirms airflow obstruction due to COPD?",
+    vignetteTitle: "Core definition",
+    stem: "Frailty is best described as which SINGLE concept?",
     options: [
-      { key: "A", text: "FEV₁/FVC ≥ 0.70 after bronchodilator" },
-      { key: "B", text: "FEV₁/FVC &lt; 0.70 after bronchodilator" }, // correct
-      { key: "C", text: "Raised DLCO" },
+      { key: "A", text: "Aging with multimorbidity only" },
+      { key: "B", text: "Irreversible cognitive decline" },
       {
-        key: "D",
-        text: "FVC increase &gt; 12% and 200 mL after bronchodilator",
-      },
-      { key: "E", text: "Peak flow variability &gt; 20%" },
+        key: "C",
+        text: "Syndrome of ↓ physiologic reserve → ↑ vulnerability to stressors",
+      }, // correct
+      { key: "D", text: "Any disability requiring a wheelchair" },
+      { key: "E", text: "Same as sarcopenia" },
     ],
-    correct: "B",
+    correct: "C",
     explanation_detail: [
-      "**Diagnosis:** COPD is confirmed by **post-bronchodilator FEV₁/FVC &lt; 0.70**. ",
-      "[blue]Asthma markers[/blue] like large bronchodilator reversibility (D) or peak-flow variability (E) suggest asthma; DLCO is often [yellow]low[/yellow] in emphysema, not raised.",
+      "Frailty is a **biologic syndrome** of **reduced homeostatic reserve** and **resilience**, leading to **disproportionate adverse outcomes** after stressors.",
+      "[blue]Sarcopenia[/blue] contributes to frailty but is **not identical**.",
     ],
   },
   {
-    id: "COPD-2002",
-    topic: "Geriatrics • COPD",
+    id: "FR-4002",
+    topic: "Geriatrics • Frailty",
     difficulty: "Medium",
-    vignetteTitle: "Stable therapy ladder",
-    stem:
-      "A 79-year-old with confirmed COPD (FEV₁ 58% predicted) has persistent breathlessness despite using a short-acting bronchodilator PRN. " +
-      "No frequent exacerbations. What is the SINGLE most appropriate next step in maintenance therapy?",
+    vignetteTitle: "Phenotype vs deficit-index",
+    stem: "Which SINGLE set aligns with the **Fried phenotype** of frailty?",
     options: [
-      { key: "A", text: "Start inhaled corticosteroid (ICS) alone" },
-      { key: "B", text: "Start long-acting muscarinic antagonist (LAMA)" }, // correct
-      { key: "C", text: "Start oral theophylline" },
-      { key: "D", text: "Start long-term oral steroids" },
-      { key: "E", text: "Add prophylactic macrolide immediately" },
+      {
+        key: "A",
+        text: "Weight loss, exhaustion, slow gait, weak grip, low activity",
+      }, // correct
+      { key: "B", text: "Polypharmacy count across systems" },
+      { key: "C", text: "Charlson comorbidity components" },
+      { key: "D", text: "Delirium screening items" },
+      { key: "E", text: "Mini-Mental State Examination items" },
     ],
-    correct: "B",
+    correct: "A",
     explanation_detail: [
-      "For **symptomatic COPD without frequent exacerbations**, step up from SABA/SAMA to a **long-acting bronchodilator** — typically **LAMA** (e.g., tiotropium).",
-      "ICS is **not** first-line unless eosinophils high and/or **frequent exacerbations**; oral steroids/theophylline have limited roles and more adverse effects.",
+      "The **Fried phenotype** uses five: **unintentional weight loss**, **exhaustion**, **weak grip**, **slow gait**, **low physical activity**.",
+      "[green]Deficit-index[/green] (Rockwood/CFS) sums **accumulated deficits** across systems.",
     ],
   },
   {
-    id: "COPD-2003",
-    topic: "Geriatrics • COPD",
+    id: "FR-4003",
+    topic: "Geriatrics • Frailty",
     difficulty: "Medium",
-    vignetteTitle: "Exacerbation bundle",
-    stem:
-      "An 82-year-old with COPD presents with ↑ dyspnoea, ↑ sputum volume and purulence. SpO₂ 86% on air. " +
-      "Which SINGLE immediate oxygen strategy is most appropriate in the ED?",
+    vignetteTitle: "Clinical Frailty Scale (CFS)",
+    stem: "An 83-year-old independent in ADLs with brisk walks and no fatigue is scored on the **CFS**. Which SINGLE level fits best?",
     options: [
-      { key: "A", text: "100% oxygen via non-rebreather mask" },
-      { key: "B", text: "Target sats 88–92% with controlled oxygen" }, // correct
-      { key: "C", text: "Room air only" },
-      { key: "D", text: "Hyperventilation coaching" },
-      { key: "E", text: "Immediate NIV for all COPD exacerbations" },
+      { key: "A", text: "CFS 1 – Very Fit" }, // correct
+      { key: "B", text: "CFS 3 – Managing well" },
+      { key: "C", text: "CFS 5 – Mildly frail" },
+      { key: "D", text: "CFS 7 – Severely frail" },
+      { key: "E", text: "CFS 9 – Terminally ill" },
     ],
-    correct: "B",
+    correct: "A",
     explanation_detail: [
-      "[red]CO₂ retainers risk[/red]: give **controlled oxygen** to a target **88–92%** (e.g., Venturi mask) while assessing ABG. ",
-      "NIV is for **persistent hypercapnic acidotic respiratory failure** despite optimal therapy; 100% O₂ risks worsening hypercapnia.",
+      "**CFS 1**: active, energetic, fittest for age. **CFS 3** has medical problems well-controlled; **CFS ≥5** indicates degrees of frailty with dependency.",
     ],
   },
   {
-    id: "COPD-2004",
-    topic: "Geriatrics • COPD",
+    id: "FR-4004",
+    topic: "Geriatrics • Frailty",
     difficulty: "Hard",
-    vignetteTitle: "When to add ICS",
-    stem:
-      "A 74-year-old with COPD on LAMA/LABA has ≥2 moderate exacerbations in the last year. Blood eosinophils 420/µL. " +
-      "What SINGLE change is most appropriate to reduce future exacerbations?",
+    vignetteTitle: "Interventions that move the needle",
+    stem: "Which SINGLE intervention has the **strongest evidence** to improve function in frailty?",
     options: [
-      { key: "A", text: "Withdraw bronchodilators and use ICS alone" },
-      { key: "B", text: "Add inhaled corticosteroid (triple therapy)" }, // correct
-      { key: "C", text: "Start long-term oral prednisolone" },
-      { key: "D", text: "Start theophylline as first add-on" },
-      { key: "E", text: "No change — eosinophils not relevant" },
+      { key: "A", text: "Long-term systemic corticosteroids" },
+      {
+        key: "B",
+        text: "Multicomponent exercise: resistance + balance + gait + aerobic",
+      }, // correct
+      { key: "C", text: "Bed rest with high-calorie feeds" },
+      { key: "D", text: "Routine antipsychotics at night" },
+      { key: "E", text: "Daily IV fluids at home" },
     ],
     correct: "B",
     explanation_detail: [
-      "High **blood eosinophils** and **frequent exacerbations** → benefit from adding **ICS** (i.e., **triple therapy** LABA/LAMA/ICS).",
-      "Avoid chronic oral steroids; theophylline has narrow therapeutic window and limited benefit.",
+      "Best data favors **multicomponent exercise** emphasizing **progressive resistance training**, **balance**, and **gait/aerobic** work. Pair with **nutrition optimization** and **CGA**.",
+    ],
+  },
+  {
+    id: "FR-4005",
+    topic: "Geriatrics • Frailty",
+    difficulty: "Medium",
+    vignetteTitle: "Protein targets",
+    stem: "A 76-year-old with frailty and weight loss starts resistance training. Which SINGLE **daily protein** target is most appropriate (normal renal function)?",
+    options: [
+      { key: "A", text: "0.6 g/kg/day" },
+      { key: "B", text: "0.8 g/kg/day (standard RDA for adults)" },
+      { key: "C", text: "1.0–1.2 g/kg/day" }, // correct
+      { key: "D", text: "≥2.5 g/kg/day for all older adults" },
+      { key: "E", text: "Protein restriction to prevent sarcopenia" },
+    ],
+    correct: "C",
+    explanation_detail: [
+      "Most guidelines suggest **~1.0–1.2 g/kg/day** in older adults; up to **1.2–1.5 g/kg/day** if malnourished/ill and renal function allows.",
+    ],
+  },
+  {
+    id: "FR-4006",
+    topic: "Geriatrics • Frailty",
+    difficulty: "Medium",
+    vignetteTitle: "Hospital vulnerability",
+    stem: "A frail inpatient is at risk of deconditioning and delirium. Which SINGLE **bundle element** is most protective?",
+    options: [
+      { key: "A", text: "Strict bed rest until discharge" },
+      {
+        key: "B",
+        text: "Early mobilization with PT/OT and orientation (clock, glasses, hearing aids)",
+      }, // correct
+      { key: "C", text: "Routine benzodiazepines for sleep" },
+      { key: "D", text: "NPO after midnight for entire stay" },
+      { key: "E", text: "Indwelling catheter for convenience" },
+    ],
+    correct: "B",
+    explanation_detail: [
+      "Frailty care-in-hospital: **early mobilization**, **sensory optimization**, **hydration/nutrition**, **sleep hygiene**, **avoid deliriogenic meds**, **minimize tethers**.",
     ],
   },
 ];
@@ -163,7 +187,7 @@ function useIsMobile(bp = 768) {
   return m;
 }
 
-/* =============================== Modals =============================== */
+/* =============================== Modal =============================== */
 function Modal({
   open,
   onClose,
@@ -196,7 +220,7 @@ function Modal({
   );
 }
 
-/* ============== Mobile question list (uses modal instead of sidebar) ============== */
+/* ============== Mobile question list (modal) ============== */
 function MobileQuestionList({
   open,
   onClose,
@@ -266,7 +290,7 @@ function MobileQuestionList({
   );
 }
 
-/* =============================== Results =============================== */
+/* =============================== Results (inline) =============================== */
 function ResultsView({
   answers,
   startedAt,
@@ -295,7 +319,10 @@ function ResultsView({
   return (
     <div className="mx-auto max-w-[900px] px-4 py-8">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl md:text-3xl font-extrabold">Results — COPD</h1>
+        <h1 className="text-2xl md:text-3xl font-extrabold">
+          Results — Frailty
+        </h1>
+
         <div className="mt-4 grid sm:grid-cols-3 gap-4">
           <div className="rounded-xl border p-4">
             <p className="text-sm text-slate-600">Score</p>
@@ -318,7 +345,7 @@ function ResultsView({
         <div className="mt-6">
           <p className="font-semibold mb-2">Review incorrect questions</p>
           {wrong.length === 0 ? (
-            <p className="text-slate-600">Nice — nothing wrong this time 🎯</p>
+            <p className="text-slate-600">Nice — nothing wrong this round 🎯</p>
           ) : (
             <ul className="space-y-2">
               {wrong.map((idx) => {
@@ -361,7 +388,7 @@ function ResultsView({
 }
 
 /* ================================ Page ================================ */
-export default function COPD() {
+export default function Frailty() {
   const isMobile = useIsMobile();
 
   // session/order state
@@ -443,17 +470,12 @@ export default function COPD() {
     setShowResults(false);
   };
 
-  const choose = (opt) => setAnswers((a) => ({ ...a, [q.id]: opt }));
-  const submit = () => setRevealed((r) => ({ ...r, [q.id]: true }));
-  const next = () => currentIdx < total - 1 && setCurrentIdx((i) => i + 1);
-  const prev = () => currentIdx > 0 && setCurrentIdx((i) => i - 1);
-
   const onEndSession = () => {
     setEndedAt(Date.now());
-    setShowResults(true); // <- open results instead of navigating elsewhere
+    setShowResults(true); // show inline results
   };
 
-  // if results requested
+  // results short-circuit
   if (showResults) {
     return (
       <ResultsView
@@ -500,7 +522,7 @@ export default function COPD() {
         </div>
       </header>
 
-      {/* Sidebar toggle: mobile shows FAB at bottom-right; desktop shows left chevron */}
+      {/* Sidebar toggle */}
       <button
         onClick={() => setSidebarOpen((s) => !s)}
         className={[
@@ -600,7 +622,7 @@ export default function COPD() {
             </div>
           </aside>
 
-          {/* Main column (adds padding when sidebar open on desktop) */}
+          {/* Main column */}
           <div
             className={`transition-all ${
               sidebarOpen && !isMobile ? "md:pl-[320px]" : "ml-0"
@@ -737,7 +759,7 @@ export default function COPD() {
                 </div>
               </div>
 
-              {/* Mobile tool buttons */}
+              {/* Mobile tools */}
               <div className="fixed md:hidden right-4 bottom-4 flex gap-2">
                 <button
                   title="Toggle highlight mode"
@@ -794,7 +816,7 @@ function StartOverlay({ open, onPick }) {
     <Modal
       open={open}
       onClose={() => {}}
-      title="Start COPD Question Bank"
+      title="Start Frailty Question Bank"
       maxW="max-w-lg"
       overlayClass="bg-white"
     >

@@ -44,6 +44,12 @@ import FrontotemporalDementia from "./pages/diseases/geriatrics/FrontotemporalDe
 import Delirium from "./pages/diseases/geriatrics/Delirium.jsx";
 import ParkinsonsDisease from "./pages/diseases/geriatrics/ParkinsonsDisease.jsx";
 import StrokeTIA from "./pages/diseases/geriatrics/StrokeTIA.jsx";
+import COPD from "./pages/diseases/geriatrics/COPD.jsx";
+import UrinaryIncontinence from "./pages/diseases/geriatrics/UrinaryIncontinence.jsx";
+import HeartFailureHfpef from "./pages/diseases/geriatrics/HeartFailureHfpef.jsx";
+import PressureUlcers from "./pages/diseases/geriatrics/PressureUlcers.jsx";
+import Frailty from "./pages/diseases/geriatrics/Frailty.jsx";
+import CKD from "./pages/diseases/geriatrics/CKD.jsx";
 
 export default function App() {
   return (
@@ -107,6 +113,21 @@ export default function App() {
         element={<ParkinsonsDisease />}
       />
       <Route path="/diseases/geriatrics/stroke-tia" element={<StrokeTIA />} />
+      <Route path="/diseases/geriatrics/copd" element={<COPD />} />
+      <Route
+        path="/diseases/geriatrics/urinary-incontinence"
+        element={<UrinaryIncontinence />}
+      />
+      <Route
+        path="/diseases/geriatrics/heart-failure-hfpef"
+        element={<HeartFailureHfpef />}
+      />
+      <Route
+        path="/diseases/geriatrics/pressure-ulcers"
+        element={<PressureUlcers />}
+      />
+      <Route path="/diseases/geriatrics/frailty" element={<Frailty />} />
+      <Route path="/diseases/geriatrics/ckd" element={<CKD />} />
     </Routes>
   );
 }
