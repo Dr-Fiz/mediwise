@@ -1,3 +1,4 @@
+// src/MediwiseHome.jsx
 import React, { useMemo, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 
@@ -254,6 +255,10 @@ export default function MediwiseHome() {
             <a href="#diseases" className="hover:text-slate-900 transition">
               Diseases
             </a>
+            {/* New NVU navigation item */}
+            <Link to="/nvu" className="hover:text-slate-900 transition">
+              NVU
+            </Link>
             <a href="#why" className="hover:text-slate-900 transition">
               Why Mediwise
             </a>
@@ -303,6 +308,13 @@ export default function MediwiseHome() {
             >
               Learn Diseases →
             </button>
+            {/* Prominent NVU hero button */}
+            <Link
+              to="/nvu"
+              className="inline-flex items-center gap-2 rounded-2xl shadow bg-gradient-to-r from-emerald-400 to-sky-400 text-emerald-950 font-bold px-5 py-3"
+            >
+              NVU Subjects →
+            </Link>
           </div>
         </div>
       </section>
@@ -411,6 +423,16 @@ export default function MediwiseHome() {
               title="Green/Blue Accents"
               blurb="A calm yet energizing palette used sparingly on white."
             />
+          </div>
+
+          {/* Secondary NVU entry point */}
+          <div className="mt-8">
+            <Link
+              to="/nvu"
+              className="inline-flex items-center gap-2 rounded-2xl px-5 py-3 font-bold bg-gradient-to-r from-emerald-400 to-sky-400 text-emerald-950 shadow"
+            >
+              Visit NVU →
+            </Link>
           </div>
         </div>
       </section>

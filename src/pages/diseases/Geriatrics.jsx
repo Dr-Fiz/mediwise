@@ -119,6 +119,9 @@ export default function Geriatrics() {
   const [q, setQ] = useState("");
   const nav = useNavigate();
 
+  // This points back to MediwiseHome.jsx (mounted at "/")
+  const HOME_PATH = "/";
+
   const filtered = useMemo(() => {
     const n = q.trim().toLowerCase();
     if (!n) return topics;
@@ -133,7 +136,7 @@ export default function Geriatrics() {
         {/* Back button */}
         <div className="flex items-center gap-3 mb-4">
           <button
-            onClick={() => nav(-1)}
+            onClick={() => nav(HOME_PATH)}
             className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-sm shadow-sm hover:bg-slate-50"
           >
             ← Back

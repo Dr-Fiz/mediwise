@@ -9,6 +9,12 @@ import Plabable from "./pages/Plabable.jsx";
 import PlabableAcuteEmergency from "./pages/PlabableAcuteEmergency.jsx";
 
 /* =========================
+ * NVU (Subjects + Subject Mode)
+ * ========================= */
+import NVU from "./pages/nvu-subjects/NVU.jsx";
+import GeriatricsOSCE from "./pages/nvu-subjects/geriatrics-osce.jsx";
+
+/* =========================
  * Diseases by System (Top-Level)
  * ========================= */
 import Cardiovascular from "./pages/diseases/Cardiovascular.jsx";
@@ -63,6 +69,11 @@ export default function App() {
         path="/plabable/acute-emergency"
         element={<PlabableAcuteEmergency />}
       />
+
+      {/* NVU */}
+      <Route path="/nvu" element={<NVU />} />
+      <Route path="/nvu/:subject" element={<NVU />} />
+      <Route path="/nvu/geriatrics/osce" element={<GeriatricsOSCE />} />
 
       {/* Diseases by System */}
       <Route path="/diseases/cardiovascular" element={<Cardiovascular />} />
